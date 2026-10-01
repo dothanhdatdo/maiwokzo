@@ -409,24 +409,47 @@ h2 {
   animation: surface-sheen 780ms var(--ease-luxury);
 }
 
-.hero-service-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+.service-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 640px;
+  margin-top: 22px;
 }
 
-.hero-service-row span {
-  min-height: 34px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
+.service-mode {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 14px 16px;
   border-radius: var(--radius);
-  background: oklch(0.91 0.060 132 / 0.62);
-  border: 1px solid oklch(0.66 0.08 132 / 0.25);
-  color: oklch(0.28 0.05 112);
+  border: 1px solid;
+  border-left-width: 4px;
+}
+
+.service-mode strong {
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.service-time {
   font-size: 0.83rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.service-mode-lunch {
+  background: oklch(0.91 0.060 132 / 0.62);
+  border-color: oklch(0.66 0.08 132 / 0.35);
+  border-left-color: var(--jade);
+  color: oklch(0.28 0.05 112);
+}
+
+.service-mode-dinner {
+  background: oklch(0.95 0.045 28 / 0.75);
+  border-color: oklch(0.42 0.150 28 / 0.22);
+  border-left-color: var(--red);
+  color: var(--red-dark);
 }
 
 .hero-visual {
@@ -1434,7 +1457,7 @@ textarea { resize: vertical; }
 }
 
 .page-ready .quick-facts span,
-.page-ready .hero-service-row span {
+.page-ready .service-mode {
   animation: rise-in 780ms var(--ease-luxury) both;
 }
 
@@ -1449,8 +1472,8 @@ textarea { resize: vertical; }
 .page-ready .quick-facts span:nth-child(1) { animation-delay: 1880ms; }
 .page-ready .quick-facts span:nth-child(2) { animation-delay: 1960ms; }
 .page-ready .quick-facts span:nth-child(3) { animation-delay: 2040ms; }
-.page-ready .hero-service-row span:nth-child(1) { animation-delay: 2120ms; }
-.page-ready .hero-service-row span:nth-child(2) { animation-delay: 2180ms; }
+.page-ready .service-mode:nth-child(1) { animation-delay: 1720ms; }
+.page-ready .service-mode:nth-child(2) { animation-delay: 1780ms; }
 
 @keyframes rise-in {
   from {
@@ -1772,9 +1795,11 @@ textarea { resize: vertical; }
     text-align: center;
     padding: 12px;
   }
-  .hero-service-row span {
-    width: 100%;
-    justify-content: center;
+  .service-modes {
+    max-width: 27rem;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
   }
   .hero-visual {
     max-width: 27rem;
@@ -1825,6 +1850,7 @@ textarea { resize: vertical; }
     white-space: nowrap;
   }
   .quick-facts,
+  .service-modes,
   .feature-grid,
   .form-row {
     grid-template-columns: 1fr;
