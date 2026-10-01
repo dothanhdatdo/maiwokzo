@@ -7,17 +7,14 @@ const RESTAURANT = {
 };
 
 // Bestellzeiten: hier ändern (Uhrzeit im Format "HH:MM", Tage: 1 = Montag ... 7 = Sonntag).
-// Mittags ist nur das Mittagsmenü bestellbar, abends nur die Speisekarte.
-const LUNCH_HOURS = {
-  start: "11:00",
-  end: "17:00",
-  days: [1, 2, 3, 4, 5]
-};
-const DINNER_HOURS = {
-  start: "17:00",
-  end: "21:00",
-  days: [1, 2, 3, 4, 5, 6]
-};
+// Jede Zeile ist ein Zeitfenster. Mittags ist nur das Mittagsmenü bestellbar, sonst nur die Speisekarte.
+const LUNCH_HOURS = [
+  { days: [1, 2, 3, 4, 5], start: "11:00", end: "17:00" }
+];
+const DINNER_HOURS = [
+  { days: [1, 2, 3, 4, 5], start: "17:00", end: "21:00" },
+  { days: [6], start: "11:00", end: "21:00" }
+];
 // Manuell umschalten: "auto" = nach Uhrzeit, "mittag" = nur Mittagsmenü, "abend" = nur Speisekarte.
 const MENU_MODE = "auto";
 const LUNCH_HOURS_TEXT = hoursText(LUNCH_HOURS);
@@ -156,7 +153,7 @@ function renderDinnerMenu(open = isDinnerOpenNow()) {
       : state.category === "Alle Kategorien" || item.category === state.category;
     return filterMatch && categoryMatch;
   });
-  const cardOptions = open ? {} : { disabled: true, buttonText: `Nur ${DINNER_HOURS.start}-${DINNER_HOURS.end}` };
+  const cardOptions = open ? {} : { disabled: true, buttonText: closedButtonText(DINNER_HOURS) };
   const pageData = paginateItems(items, state.dinnerPage);
   state.dinnerPage = pageData.page;
   grid.innerHTML = pageData.items.length ? pageData.items.map((item) => menuCard(item, cardOptions)).join("") : emptyMenu("Keine Gerichte für diese Auswahl gefunden.");
@@ -178,7 +175,7 @@ function updateMenuAvailability() {
   if (section) section.hidden = false;
   $$("[data-lunch-nav]").forEach((link) => { link.hidden = false; });
   if (lunchBadge) {
-    lunchBadge.textContent = lunchOpen ? "Mittag jetzt bestellbar" : `Bestellbar ${LUNCH_HOURS.start}-${LUNCH_HOURS.end} Uhr`;
+    lunchBadge.textContent = lunchOpen ? "Mittag jetzt bestellbar" : closedBadgeText(LUNCH_HOURS);
     lunchBadge.classList.toggle("closed", !lunchOpen);
   }
   if (lunchMessage) {
@@ -187,7 +184,7 @@ function updateMenuAvailability() {
       : `Das Mittagsmenü bleibt sichtbar. Kaufen können Sie diese Gerichte ${LUNCH_HOURS_TEXT}.`;
   }
   if (dinnerBadge) {
-    dinnerBadge.textContent = dinnerOpen ? "Abendkarte jetzt bestellbar" : `Bestellbar ${DINNER_HOURS.start}-${DINNER_HOURS.end} Uhr`;
+    dinnerBadge.textContent = dinnerOpen ? "Speisekarte jetzt bestellbar" : closedBadgeText(DINNER_HOURS);
     dinnerBadge.classList.toggle("closed", !dinnerOpen);
   }
   if (dinnerMessage) {
@@ -207,7 +204,7 @@ function renderLunchMenu(open = isLunchOpenNow()) {
     const category = lunchCategoryFor(item);
     return state.lunchCategory === "Beliebt" ? item.tags.includes("beliebt") : category === state.lunchCategory;
   });
-  const cardOptions = open ? {} : { disabled: true, buttonText: `Nur ${LUNCH_HOURS.start}-${LUNCH_HOURS.end}` };
+  const cardOptions = open ? {} : { disabled: true, buttonText: closedButtonText(LUNCH_HOURS) };
   const pageData = paginateItems(items, state.lunchPage);
   state.lunchPage = pageData.page;
   grid.innerHTML = pageData.items.length ? pageData.items.map((item) => menuCard(item, cardOptions)).join("") : emptyMenu("Keine Mittagsgerichte für diese Auswahl gefunden.");
@@ -621,9 +618,23 @@ function activeMenu(now = getBerlinParts()) {
   return null;
 }
 
-function isWithinHours(hours, now) {
+function isWithinHours(slots, now) {
   const minutes = now.hour * 60 + now.minute;
-  return hours.days.includes(now.weekday) && minutes >= toMinutes(hours.start) && minutes < toMinutes(hours.end);
+  return slots.some((slot) => slot.days.includes(now.weekday) && minutes >= toMinutes(slot.start) && minutes < toMinutes(slot.end));
+}
+
+function todaySlot(slots, now = getBerlinParts()) {
+  return slots.find((slot) => slot.days.includes(now.weekday));
+}
+
+function closedButtonText(slots) {
+  const slot = todaySlot(slots);
+  return slot ? `Nur ${slot.start}-${slot.end}` : "Heute nicht bestellbar";
+}
+
+function closedBadgeText(slots) {
+  const slot = todaySlot(slots);
+  return slot ? `Bestellbar ${slot.start}-${slot.end} Uhr` : "Heute nicht bestellbar";
 }
 
 function isLunchOpenNow() {
@@ -644,14 +655,16 @@ function unavailableMessage(id) {
     : `Gerichte der Speisekarte können nur ${DINNER_HOURS_TEXT} bestellt werden.`;
 }
 
-function hoursText(hours) {
+function hoursText(slots) {
   const names = ["", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-  const days = [...hours.days].sort((a, b) => a - b);
-  const consecutive = days.every((day, index) => index === 0 || day === days[index - 1] + 1);
-  const dayText = consecutive && days.length > 2
-    ? `${names[days[0]]} bis ${names[days[days.length - 1]]}`
-    : days.map((day) => names[day]).join(", ");
-  return `${dayText} von ${hours.start} bis ${hours.end} Uhr`;
+  return slots.map((slot) => {
+    const days = [...slot.days].sort((a, b) => a - b);
+    const consecutive = days.every((day, index) => index === 0 || day === days[index - 1] + 1);
+    const dayText = consecutive && days.length > 2
+      ? `${names[days[0]]} bis ${names[days[days.length - 1]]}`
+      : days.map((day) => names[day]).join(", ");
+    return `${dayText} von ${slot.start} bis ${slot.end} Uhr`;
+  }).join(" und ");
 }
 
 function toMinutes(time) {
