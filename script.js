@@ -6,6 +6,13 @@ const RESTAURANT = {
   timezone: "Europe/Berlin"
 };
 
+// Mittagszeiten: hier ändern, um die Bestellzeit für das Mittagsmenü anzupassen (Format "HH:MM").
+const LUNCH_HOURS = {
+  start: "09:00",
+  end: "17:00"
+};
+const LUNCH_HOURS_TEXT = `Montag bis Samstag von ${LUNCH_HOURS.start} bis ${LUNCH_HOURS.end} Uhr`;
+
 const EMAIL_ENDPOINT = "";
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const MENU_PAGE_SIZE = 8;
@@ -160,13 +167,13 @@ function updateLunchMenu() {
   if (section) section.hidden = false;
   $$("[data-lunch-nav]").forEach((link) => { link.hidden = false; });
   if (badge) {
-    badge.textContent = open ? "Mittag jetzt bestellbar" : "Bestellung ab 09:00 Uhr";
+    badge.textContent = open ? "Mittag jetzt bestellbar" : `Bestellung ab ${LUNCH_HOURS.start} Uhr`;
     badge.classList.toggle("closed", !open);
   }
   if (message) {
     message.textContent = open
       ? "Das Mittagsmenü ist jetzt bestellbar."
-      : "Das Mittagsmenü bleibt sichtbar. Kaufen können Sie diese Gerichte Montag bis Samstag von 09:00 bis 15:00 Uhr.";
+      : `Das Mittagsmenü bleibt sichtbar. Kaufen können Sie diese Gerichte ${LUNCH_HOURS_TEXT}.`;
   }
   renderLunchMenu(open);
   renderCart();
@@ -179,7 +186,7 @@ function renderLunchMenu(open = isLunchOpenNow()) {
     const category = lunchCategoryFor(item);
     return state.lunchCategory === "Beliebt" ? item.tags.includes("beliebt") : category === state.lunchCategory;
   });
-  const cardOptions = open ? {} : { disabled: true, buttonText: "Nur 09:00-15:00" };
+  const cardOptions = open ? {} : { disabled: true, buttonText: `Nur ${LUNCH_HOURS.start}-${LUNCH_HOURS.end}` };
   const pageData = paginateItems(items, state.lunchPage);
   state.lunchPage = pageData.page;
   grid.innerHTML = pageData.items.length ? pageData.items.map((item) => menuCard(item, cardOptions)).join("") : emptyMenu("Keine Mittagsgerichte für diese Auswahl gefunden.");
@@ -389,7 +396,7 @@ function changeQty(id, delta) {
   const item = state.cart.find((cartItem) => cartItem.id === id);
   if (!item) return;
   if (delta > 0 && isLunchItem(id) && !isLunchOpenNow()) {
-    showNotice($("#orderNotice"), "Mittagsgerichte können nur Montag bis Samstag von 09:00 bis 15:00 Uhr bestellt werden.", true);
+    showNotice($("#orderNotice"), `Mittagsgerichte können nur ${LUNCH_HOURS_TEXT} bestellt werden.`, true);
     return;
   }
   item.qty += delta;
@@ -425,7 +432,7 @@ function handleOrder(event) {
   const data = Object.fromEntries(new FormData(form));
   if (!state.cart.length) return showNotice($("#orderNotice"), "Bitte legen Sie zuerst mindestens ein Gericht in den Warenkorb.", true);
   if (cartHasLunchItems() && !isLunchOpenNow()) {
-    return showNotice($("#orderNotice"), "Mittagsgerichte können nur Montag bis Samstag von 09:00 bis 15:00 Uhr bestellt werden.", true);
+    return showNotice($("#orderNotice"), `Mittagsgerichte können nur ${LUNCH_HOURS_TEXT} bestellt werden.`, true);
   }
   if (!form.checkValidity()) return showNotice($("#orderNotice"), "Bitte füllen Sie alle Pflichtfelder korrekt aus.", true);
   const lines = state.cart.map((cartItem) => {
@@ -591,7 +598,12 @@ function isLunchOpenNow() {
 
 function isLunchOpenParts(now) {
   const minutes = now.hour * 60 + now.minute;
-  return now.weekday !== 7 && minutes >= 9 * 60 && minutes < 15 * 60;
+  return now.weekday !== 7 && minutes >= toMinutes(LUNCH_HOURS.start) && minutes < toMinutes(LUNCH_HOURS.end);
+}
+
+function toMinutes(time) {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
 }
 
 function cartHasLunchItems() {
