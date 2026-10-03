@@ -442,6 +442,7 @@ function renderCart() {
   const wrap = $("#cartItems");
   if (!wrap) return;
   state.cart.forEach(normalizeSauces);
+  updatePickupWindow();
   const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
   $$("[data-cart-count]").forEach((node) => { node.textContent = String(count); });
   if (!state.cart.length) {
@@ -692,6 +693,56 @@ function persistCart() {
 
 function initForms() {
   $("#orderForm")?.addEventListener("submit", handleOrder);
+  $('#orderForm [name="pickupDate"]')?.addEventListener("change", updatePickupWindow);
+}
+
+// Abholzeit richtet sich nach dem Warenkorb: Mittagsgerichte 11:00-16:59, Speisekarte 17:00-21:00 (samstags ab 11:00).
+function pickupWindow(dateISO) {
+  if (!state.cart.length) return null;
+  const isLunch = state.cart.some((cartItem) => isLunchItem(cartItem.id));
+  const slots = isLunch ? LUNCH_HOURS : DINNER_HOURS;
+  const weekday = dateISO ? (new Date(`${dateISO}T12:00:00Z`).getUTCDay() || 7) : getBerlinParts().weekday;
+  const slot = slots.find((entry) => entry.days.includes(weekday));
+  const label = isLunch ? "Mittagsgerichte" : "Gerichte der Speisekarte";
+  if (!slot) return { label, closed: true };
+  const last = toMinutes(slot.end) - 1;
+  const end = `${String(Math.floor(last / 60)).padStart(2, "0")}:${String(last % 60).padStart(2, "0")}`;
+  return { label, start: slot.start, end: isLunch ? end : slot.end };
+}
+
+function updatePickupWindow() {
+  const input = $('#orderForm [name="pickupTime"]');
+  const hint = $("#pickupHint");
+  if (!input || !hint) return;
+  const pickup = pickupWindow($('#orderForm [name="pickupDate"]')?.value);
+  if (!pickup) {
+    input.min = "11:00";
+    input.max = "21:00";
+    hint.textContent = "";
+    return;
+  }
+  if (pickup.closed) {
+    hint.textContent = `${pickup.label} sind an diesem Tag nicht bestellbar.`;
+    return;
+  }
+  input.min = pickup.start;
+  input.max = pickup.end;
+  hint.textContent = `Abholung für ${pickup.label}: ${pickup.start}-${pickup.end} Uhr`;
+}
+
+function pickupError(data) {
+  const pickup = pickupWindow(data.pickupDate);
+  if (!pickup || !data.pickupTime) return "";
+  if (pickup.closed) return `${pickup.label} können am gewählten Tag nicht abgeholt werden.`;
+  const time = toMinutes(data.pickupTime);
+  if (time < toMinutes(pickup.start) || time > toMinutes(pickup.end)) {
+    return `Bitte wählen Sie für ${pickup.label} eine Abholzeit zwischen ${pickup.start} und ${pickup.end} Uhr.`;
+  }
+  const now = getBerlinParts();
+  if (data.pickupDate === getBerlinDateISO() && time < now.hour * 60 + now.minute) {
+    return "Die gewählte Abholzeit liegt in der Vergangenheit.";
+  }
+  return "";
 }
 
 function handleOrder(event) {
@@ -709,6 +760,8 @@ function handleOrder(event) {
     openCart();
     return showNotice($("#orderNotice"), `Bitte wählen Sie im Warenkorb für jede Portion von ${item.code} ${item.name} eine Sauce.`, true);
   }
+  const pickupProblem = pickupError(data);
+  if (pickupProblem) return showNotice($("#orderNotice"), pickupProblem, true);
   if (!form.checkValidity()) return showNotice($("#orderNotice"), "Bitte füllen Sie alle Pflichtfelder korrekt aus.", true);
   const lines = state.cart.map((cartItem) => {
     const item = findItem(cartItem.id);
