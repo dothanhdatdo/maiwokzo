@@ -662,6 +662,24 @@ h2 {
   border-style: dashed;
 }
 
+.quick-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 2px solid var(--line);
+  font-weight: 800;
+}
+
+.quick-total strong {
+  color: var(--lacquer);
+  font-size: 1.2rem;
+}
+
+.quick-total[hidden] { display: none; }
+
 .quick-actions .btn { width: 100%; min-height: 48px; }
 .quick-actions[hidden] { display: none; }
 

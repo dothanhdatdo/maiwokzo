@@ -610,9 +610,13 @@ function renderQuickResults() {
     }).join("");
   }
   const pending = found.filter((row) => !row.added && isItemOrderableNow(row.id));
+  const pendingTotal = pending.reduce((sum, row) => sum + findItem(row.id).price, 0);
+  const total = $("#quickTotal");
+  total.hidden = !(state.quickMode === "codes" && pending.length);
+  total.innerHTML = `<span>Summe: ${pending.length} ${pending.length === 1 ? "Gericht" : "Gerichte"}</span><strong>${euro.format(pendingTotal)}</strong>`;
   const actions = $("#quickActions");
   actions.hidden = !(state.quickMode === "codes" && pending.length > 1);
-  $("#quickAddAll").textContent = `Alle ${pending.length} in den Warenkorb`;
+  $("#quickAddAll").textContent = `Alle ${pending.length} in den Warenkorb · ${euro.format(pendingTotal)}`;
   $$("[data-quick-sauce]", wrap).forEach((picker) => {
     picker.addEventListener("change", (event) => {
       state.quickRows[Number(picker.dataset.quickSauce)].sauce = event.target.value;
@@ -648,7 +652,8 @@ function addQuickRows(rows) {
     row.added = true;
   });
   const names = orderable.map((row) => findItem(row.id).code).join(", ");
-  const added = `${orderable.length === 1 ? "Gericht" : `${orderable.length} Gerichte`} (${names}) in den Warenkorb gelegt.`;
+  const cartCount = state.cart.reduce((sum, cartItem) => sum + cartItem.qty, 0);
+  const added = `${orderable.length === 1 ? "Gericht" : `${orderable.length} Gerichte`} (${names}) in den Warenkorb gelegt. Warenkorb: ${cartCount} ${cartCount === 1 ? "Gericht" : "Gerichte"} · ${euro.format(cartTotal())}.`;
   if (state.quickRows.every((row) => row.missing || row.added || !isItemOrderableNow(row.id))) {
     resetQuickSearch(`${added} Nächstes Gericht eingeben …`);
   } else {
