@@ -94,6 +94,28 @@
       </div>
     </section>
 
+    <section class="quick-order" id="schnellbestellung" aria-labelledby="quickOrderTitle">
+      <div class="container quick-order-inner">
+        <div class="quick-order-head">
+          <p class="eyebrow">Schnell bestellen</p>
+          <h2 id="quickOrderTitle">Gericht suchen</h2>
+          <p class="section-copy">Name oder Nummer eingeben. Mehrere Nummern mit Leerzeichen trennen, z. B. <strong>2 7 34</strong>.</p>
+        </div>
+        <div class="quick-order-box">
+          <label class="quick-search">
+            <span class="sr-only">Gericht suchen</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            <input type="search" id="quickSearch" placeholder="z. B. Pad Thai oder 2 7 34" autocomplete="off" enterkeyhint="go" aria-describedby="quickStatus">
+          </label>
+          <p class="quick-status" id="quickStatus" aria-live="polite"></p>
+          <div class="quick-results" id="quickResults"></div>
+          <div class="quick-actions" id="quickActions" hidden>
+            <button class="btn btn-primary" type="button" id="quickAddAll">Alle in den Warenkorb</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="menu-section section-pad lunch-band" id="mittagsmenu" data-lunch-section>
       <div class="container menu-shell">
         <aside class="menu-aside">

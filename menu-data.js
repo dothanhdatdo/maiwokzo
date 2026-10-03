@@ -259,3 +259,9 @@ const dinnerMenu = [
     ["EX5", "Ente", 9.5], ["EX6", "Garnele", 1.8, "1 Stück"], ["EX7", "Sauce nach Wahl", 2.0]
   ].map(([code, name, price, description = "Extra Portion"]) => D(code, code, "Extras", name, description, price))
 ];
+
+// Saucen zur Auswahl für "Sauce nach Wahl" (Gourmet 60-67 und Extra-Sauce).
+const GOURMET_SAUCES = ["Thai-Basilikum-Sojasauce", "Erdnusssauce", "Rotes Thai-Curry"];
+dinnerMenu.forEach((item) => {
+  if (item.category === "Gourmet" || item.id === "EX7") item.sauces = GOURMET_SAUCES;
+});

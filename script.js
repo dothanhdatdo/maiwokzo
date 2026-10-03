@@ -29,7 +29,10 @@ const state = {
   category: "Empfohlen",
   lunchCategory: "Box to go",
   dinnerPage: 1,
-  lunchPage: 1
+  lunchPage: 1,
+  sauceChoice: {},
+  quickRows: [],
+  quickMode: ""
 };
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -41,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   initMenus();
   initCart();
+  initQuickOrder();
   initForms();
   initGallery();
   initHeroTilt();
@@ -194,6 +198,7 @@ function updateMenuAvailability() {
   }
   renderLunchMenu(lunchOpen);
   renderDinnerMenu(dinnerOpen);
+  renderQuickResults();
   renderCart();
 }
 
@@ -303,9 +308,25 @@ function menuCard(item, options = {}) {
         <p>${escapeHtml(item.description || "")}</p>
         <div class="tag-row">${tags}</div>
         <span class="allergens">Zusatzstoffe/Allergene: ${escapeHtml(item.allergens || "Bitte im Restaurant erfragen")}</span>
+        ${item.sauces ? saucePicker(item, disabled) : ""}
         <button class="btn btn-gold" type="button" data-add="${escapeHtml(item.id)}" ${disabled}>${escapeHtml(buttonText)}</button>
       </div>
     </article>
+  `;
+}
+
+function saucePicker(item, disabled, { name = `sauce-${item.id}`, chosen = state.sauceChoice[item.id], attr = `data-sauce-picker="${escapeHtml(item.id)}"` } = {}) {
+  const options = item.sauces.map((sauce) => `
+    <label class="sauce-option">
+      <input type="radio" name="${escapeHtml(name)}" value="${escapeHtml(sauce)}" ${sauce === chosen ? "checked" : ""} ${disabled}>
+      <span>${escapeHtml(sauce)}</span>
+    </label>`).join("");
+  return `
+    <fieldset class="sauce-picker" ${attr}>
+      <legend>Sauce wählen</legend>
+      <div class="sauce-options">${options}</div>
+      <p class="sauce-hint" role="alert" hidden>Bitte zuerst eine Sauce wählen.</p>
+    </fieldset>
   `;
 }
 
@@ -318,25 +339,75 @@ function tagLabel(tag) {
 }
 
 function bindAddButtons(scope = document) {
-  $$("[data-add]", scope).forEach((button) => {
-    if (!button.disabled) button.onclick = () => addToCart(button.dataset.add, button);
+  $$("[data-sauce-picker]", scope).forEach((picker) => {
+    picker.addEventListener("change", (event) => {
+      state.sauceChoice[picker.dataset.saucePicker] = event.target.value;
+      picker.classList.remove("needs-choice");
+      $(".sauce-hint", picker).hidden = true;
+    });
   });
+  $$("[data-add]", scope).forEach((button) => {
+    if (button.disabled) return;
+    button.onclick = () => {
+      const id = button.dataset.add;
+      const picker = button.closest(".menu-card")?.querySelector("[data-sauce-picker]");
+      if (picker && !state.sauceChoice[id]) {
+        picker.classList.remove("needs-choice");
+        void picker.offsetWidth;
+        picker.classList.add("needs-choice");
+        $(".sauce-hint", picker).hidden = false;
+        $("input", picker)?.focus();
+        return;
+      }
+      addToCart(id, button, picker ? state.sauceChoice[id] : "");
+    };
+  });
+}
+
+function findCartItem(id) {
+  return state.cart.find((cartItem) => cartItem.id === id);
+}
+
+// Gerichte mit "Sauce nach Wahl": jede Portion hat ihre eigene Sauce (cartItem.sauces, Länge = qty).
+function normalizeSauces(cartItem) {
+  const item = findItem(cartItem.id);
+  if (!item?.sauces) return;
+  const sauces = Array.isArray(cartItem.sauces) ? cartItem.sauces.slice(0, cartItem.qty) : [];
+  while (sauces.length < cartItem.qty) sauces.push("");
+  cartItem.sauces = sauces.map((sauce) => (item.sauces.includes(sauce) ? sauce : ""));
+}
+
+function missingSauce(cartItem) {
+  const item = findItem(cartItem.id);
+  return Boolean(item?.sauces) && cartItem.sauces.some((sauce) => !sauce);
+}
+
+function sauceSummary(cartItem) {
+  const counts = new Map();
+  cartItem.sauces.forEach((sauce) => counts.set(sauce, (counts.get(sauce) || 0) + 1));
+  if (cartItem.qty === 1) return `Sauce: ${cartItem.sauces[0]}`;
+  return `Saucen: ${[...counts].map(([sauce, count]) => `${count}x ${sauce}`).join(", ")}`;
 }
 
 function findItem(id) {
   return [...lunchMenu, ...dinnerMenu].find((item) => item.id === id);
 }
 
-function addToCart(id, trigger) {
+function addToCart(id, trigger, sauce = "") {
   const item = findItem(id);
   if (!item) return;
+  if (item.sauces && !item.sauces.includes(sauce)) return;
   if (!isItemOrderableNow(id)) {
     showNotice($("#orderNotice"), unavailableMessage(id), true);
     return;
   }
-  const existing = state.cart.find((cartItem) => cartItem.id === id);
-  if (existing) existing.qty += 1;
-  else state.cart.push({ id, qty: 1, note: "" });
+  const existing = findCartItem(id);
+  if (existing) {
+    existing.qty += 1;
+    if (item.sauces) existing.sauces.push(sauce);
+  } else {
+    state.cart.push(item.sauces ? { id, qty: 1, note: "", sauces: [sauce] } : { id, qty: 1, note: "" });
+  }
   persistCart();
   renderCart();
   animateAddButton(trigger);
@@ -370,6 +441,7 @@ function closeCart() {
 function renderCart() {
   const wrap = $("#cartItems");
   if (!wrap) return;
+  state.cart.forEach(normalizeSauces);
   const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
   $$("[data-cart-count]").forEach((node) => { node.textContent = String(count); });
   if (!state.cart.length) {
@@ -380,12 +452,21 @@ function renderCart() {
   wrap.innerHTML = state.cart.map((cartItem) => {
     const item = findItem(cartItem.id);
     if (!item) return "";
+    const sauceSelect = item.sauces ? `
+        <div class="cart-sauces">${cartItem.sauces.map((chosen, index) => `
+          <label class="cart-sauce${chosen ? "" : " needs-choice"}">${cartItem.qty > 1 ? `Sauce Portion ${index + 1}` : "Sauce"}
+            <select data-sauce="${index}">
+              ${chosen ? "" : `<option value="" selected disabled>Bitte wählen</option>`}
+              ${item.sauces.map((sauce) => `<option ${sauce === chosen ? "selected" : ""}>${escapeHtml(sauce)}</option>`).join("")}
+            </select>
+          </label>`).join("")}
+        </div>` : "";
     return `
-      <div class="cart-item" data-cart-id="${escapeHtml(cartItem.id)}">
+      <div class="cart-item" data-cart-key="${escapeHtml(cartItem.id)}">
         <div class="cart-item-main">
           <strong>${escapeHtml(item.code || item.id)} ${escapeHtml(item.name)}</strong>
           <strong>${euro.format(item.price * cartItem.qty)}</strong>
-        </div>
+        </div>${sauceSelect}
         <div class="cart-controls">
           <button type="button" data-cart-action="minus">-</button>
           <span>${cartItem.qty}</span>
@@ -397,12 +478,15 @@ function renderCart() {
     `;
   }).join("");
   $$(".cart-item", wrap).forEach((row) => {
-    const id = row.dataset.cartId;
-    row.querySelector('[data-cart-action="minus"]').addEventListener("click", () => changeQty(id, -1));
-    row.querySelector('[data-cart-action="plus"]').addEventListener("click", () => changeQty(id, 1));
-    row.querySelector('[data-cart-action="remove"]').addEventListener("click", () => removeCartItem(id));
+    const key = row.dataset.cartKey;
+    row.querySelector('[data-cart-action="minus"]').addEventListener("click", () => changeQty(key, -1));
+    row.querySelector('[data-cart-action="plus"]').addEventListener("click", () => changeQty(key, 1));
+    row.querySelector('[data-cart-action="remove"]').addEventListener("click", () => removeCartItem(key));
+    $$("[data-sauce]", row).forEach((select) => {
+      select.addEventListener("change", () => changeSauce(key, Number(select.dataset.sauce), select.value));
+    });
     row.querySelector("[data-note]").addEventListener("input", (event) => {
-      const item = state.cart.find((cartItem) => cartItem.id === id);
+      const item = findCartItem(key);
       if (item) item.note = event.target.value;
       persistCart();
     });
@@ -410,23 +494,184 @@ function renderCart() {
   $("#cartTotal").textContent = euro.format(cartTotal());
 }
 
-function changeQty(id, delta) {
-  const item = state.cart.find((cartItem) => cartItem.id === id);
+function changeQty(key, delta) {
+  const item = findCartItem(key);
   if (!item) return;
-  if (delta > 0 && !isItemOrderableNow(id)) {
-    showNotice($("#orderNotice"), unavailableMessage(id), true);
+  if (delta > 0 && !isItemOrderableNow(item.id)) {
+    showNotice($("#orderNotice"), unavailableMessage(item.id), true);
     return;
   }
   item.qty += delta;
-  if (item.qty <= 0) removeCartItem(id);
+  if (item.sauces) {
+    if (delta > 0) item.sauces.push(item.sauces[item.sauces.length - 1] || "");
+    else item.sauces.pop();
+  }
+  if (item.qty <= 0) removeCartItem(key);
   persistCart();
   renderCart();
 }
 
-function removeCartItem(id) {
-  state.cart = state.cart.filter((cartItem) => cartItem.id !== id);
+function changeSauce(key, index, sauce) {
+  const item = findCartItem(key);
+  if (!item?.sauces) return;
+  item.sauces[index] = sauce;
   persistCart();
   renderCart();
+}
+
+function removeCartItem(key) {
+  state.cart = state.cart.filter((cartItem) => cartItem.id !== key);
+  persistCart();
+  renderCart();
+}
+
+// Schnellsuche: Name oder Nummern ("2 7 34") eingeben und direkt in den Warenkorb legen.
+function initQuickOrder() {
+  const input = $("#quickSearch");
+  if (!input) return;
+  input.addEventListener("input", () => {
+    state.quickRows = searchQuick(input.value);
+    setQuickStatus("");
+    renderQuickResults();
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") resetQuickSearch("");
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const pending = state.quickRows.filter((row) => !row.added);
+    if (state.quickMode === "codes" && pending.length) addQuickRows(pending);
+    else if (pending.length === 1) addQuickRows(pending);
+  });
+  $("#quickAddAll")?.addEventListener("click", () => addQuickRows(state.quickRows.filter((row) => !row.added)));
+}
+
+function normalizeText(value) {
+  return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
+}
+
+function quickPool() {
+  const active = activeMenu();
+  if (active === "lunch") return lunchMenu;
+  if (active === "dinner") return dinnerMenu;
+  return [...dinnerMenu, ...lunchMenu];
+}
+
+function searchQuick(query) {
+  const tokens = query.trim().split(/[\s,;+]+/).filter(Boolean);
+  state.quickMode = "";
+  if (!tokens.length) return [];
+  const pool = quickPool();
+  if (tokens.every((token) => /\d/.test(token) && /^[a-z]{0,2}\d+$/i.test(token))) {
+    state.quickMode = "codes";
+    return tokens.map((token) => {
+      const item = pool.find((entry) => entry.code.toLowerCase() === token.toLowerCase());
+      return item ? { id: item.id, sauce: "", added: false } : { missing: token };
+    });
+  }
+  state.quickMode = "names";
+  const words = normalizeText(query).split(/\s+/).filter(Boolean);
+  return pool
+    .filter((item) => {
+      const text = normalizeText(`${item.code} ${item.name} ${item.category}`);
+      return words.every((word) => text.includes(word));
+    })
+    .slice(0, 8)
+    .map((item) => ({ id: item.id, sauce: "", added: false }));
+}
+
+function renderQuickResults() {
+  const wrap = $("#quickResults");
+  if (!wrap) return;
+  const rows = state.quickRows;
+  const found = rows.filter((row) => !row.missing);
+  const missing = rows.filter((row) => row.missing).map((row) => row.missing);
+  const query = $("#quickSearch").value.trim();
+  if (query && !found.length) {
+    wrap.innerHTML = emptyMenu(missing.length ? `Keine Gerichte mit Nummer ${missing.join(", ")} gefunden.` : "Kein passendes Gericht gefunden.");
+  } else {
+    wrap.innerHTML = rows.map((row, index) => {
+      if (row.missing) return `<div class="quick-row quick-row-missing">Nr. ${escapeHtml(row.missing)} nicht gefunden</div>`;
+      const item = findItem(row.id);
+      const open = isItemOrderableNow(item.id);
+      const disabled = open && !row.added ? "" : "disabled";
+      const label = row.added ? "✓ Im Warenkorb" : open ? "Hinzufügen" : (isLunchItem(item.id) ? closedButtonText(LUNCH_HOURS) : closedButtonText(DINNER_HOURS));
+      return `
+        <div class="quick-row${row.added ? " is-added" : ""}" data-quick-row="${index}">
+          <div class="quick-row-main">
+            <span class="code">${escapeHtml(item.code)}</span>
+            <strong>${escapeHtml(item.name)}</strong>
+            <span class="price">${euro.format(item.price)}</span>
+          </div>
+          ${item.sauces && !row.added ? saucePicker(item, open ? "" : "disabled", { name: `quick-sauce-${index}`, chosen: row.sauce, attr: `data-quick-sauce="${index}"` }) : ""}
+          ${row.added && row.sauce ? `<span class="quick-row-sauce">Sauce: ${escapeHtml(row.sauce)}</span>` : ""}
+          <button class="btn btn-gold" type="button" data-quick-add="${index}" ${disabled}>${escapeHtml(label)}</button>
+        </div>
+      `;
+    }).join("");
+  }
+  const pending = found.filter((row) => !row.added && isItemOrderableNow(row.id));
+  const actions = $("#quickActions");
+  actions.hidden = !(state.quickMode === "codes" && pending.length > 1);
+  $("#quickAddAll").textContent = `Alle ${pending.length} in den Warenkorb`;
+  $$("[data-quick-sauce]", wrap).forEach((picker) => {
+    picker.addEventListener("change", (event) => {
+      state.quickRows[Number(picker.dataset.quickSauce)].sauce = event.target.value;
+      picker.classList.remove("needs-choice");
+      $(".sauce-hint", picker).hidden = true;
+    });
+  });
+  $$("[data-quick-add]", wrap).forEach((button) => {
+    button.addEventListener("click", () => addQuickRows([state.quickRows[Number(button.dataset.quickAdd)]]));
+  });
+}
+
+function addQuickRows(rows) {
+  const wrap = $("#quickResults");
+  const orderable = rows.filter((row) => !row.missing && !row.added && isItemOrderableNow(row.id));
+  if (!orderable.length) return;
+  const needSauce = orderable.filter((row) => findItem(row.id).sauces && !row.sauce);
+  if (needSauce.length) {
+    needSauce.forEach((row) => {
+      const picker = $(`[data-quick-sauce="${state.quickRows.indexOf(row)}"]`, wrap);
+      if (!picker) return;
+      picker.classList.remove("needs-choice");
+      void picker.offsetWidth;
+      picker.classList.add("needs-choice");
+      $(".sauce-hint", picker).hidden = false;
+    });
+    $(`[data-quick-sauce="${state.quickRows.indexOf(needSauce[0])}"] input`, wrap)?.focus();
+    setQuickStatus("Bitte zuerst eine Sauce wählen.", true);
+    return;
+  }
+  orderable.forEach((row) => {
+    addToCart(row.id, null, row.sauce);
+    row.added = true;
+  });
+  const names = orderable.map((row) => findItem(row.id).code).join(", ");
+  const added = `${orderable.length === 1 ? "Gericht" : `${orderable.length} Gerichte`} (${names}) in den Warenkorb gelegt.`;
+  if (state.quickRows.every((row) => row.missing || row.added || !isItemOrderableNow(row.id))) {
+    resetQuickSearch(`${added} Nächstes Gericht eingeben …`);
+  } else {
+    setQuickStatus(added);
+    renderQuickResults();
+  }
+}
+
+function resetQuickSearch(message) {
+  const input = $("#quickSearch");
+  input.value = "";
+  state.quickRows = [];
+  state.quickMode = "";
+  renderQuickResults();
+  setQuickStatus(message);
+  input.focus();
+}
+
+function setQuickStatus(text, isError = false) {
+  const status = $("#quickStatus");
+  if (!status) return;
+  status.textContent = text;
+  status.classList.toggle("error", isError);
 }
 
 function cartTotal() {
@@ -453,10 +698,16 @@ function handleOrder(event) {
   if (unavailable) {
     return showNotice($("#orderNotice"), `${unavailableMessage(unavailable.id)} Bitte entfernen Sie diese Gerichte aus dem Warenkorb.`, true);
   }
+  const withoutSauce = state.cart.find(missingSauce);
+  if (withoutSauce) {
+    const item = findItem(withoutSauce.id);
+    openCart();
+    return showNotice($("#orderNotice"), `Bitte wählen Sie im Warenkorb für jede Portion von ${item.code} ${item.name} eine Sauce.`, true);
+  }
   if (!form.checkValidity()) return showNotice($("#orderNotice"), "Bitte füllen Sie alle Pflichtfelder korrekt aus.", true);
   const lines = state.cart.map((cartItem) => {
     const item = findItem(cartItem.id);
-    return `${cartItem.qty}x ${item.code || item.id} ${item.name} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
+    return `${cartItem.qty}x ${item.code || item.id} ${item.name}${cartItem.sauces ? ` - ${sauceSummary(cartItem)}` : ""} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
   });
   const message = [
     "Bestellanfrage Maiwok Zo Freiburg", "",
