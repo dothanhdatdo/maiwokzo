@@ -15,8 +15,9 @@ const DINNER_HOURS = [
   { days: [1, 2, 3, 4, 5], start: "17:00", end: "21:00" },
   { days: [6], start: "11:00", end: "21:00" }
 ];
-// Manuell umschalten: "auto" = nach Uhrzeit, "mittag" = nur Mittagsmenü, "abend" = nur Speisekarte.
-const MENU_MODE = "auto";
+// Manuell umschalten: "auto" = nach Uhrzeit, "mittag" = nur Mittagsmenü, "abend" = nur Speisekarte,
+// "alle" = beide Karten jederzeit bestellbar (nur zum Testen).
+const MENU_MODE = "alle";
 const LUNCH_HOURS_TEXT = hoursText(LUNCH_HOURS);
 const DINNER_HOURS_TEXT = hoursText(DINNER_HOURS);
 
@@ -167,9 +168,8 @@ function renderDinnerMenu(open = isDinnerOpenNow()) {
 }
 
 function updateMenuAvailability() {
-  const active = activeMenu();
-  const lunchOpen = active === "lunch";
-  const dinnerOpen = active === "dinner";
+  const lunchOpen = isLunchOpenNow();
+  const dinnerOpen = isDinnerOpenNow();
   const section = $("[data-lunch-section]");
   const lunchBadge = $("[data-lunch-badge]");
   const lunchMessage = $("[data-lunch-message]");
@@ -179,7 +179,7 @@ function updateMenuAvailability() {
   if (section) section.hidden = false;
   $$("[data-lunch-nav]").forEach((link) => { link.hidden = false; });
   if (lunchBadge) {
-    lunchBadge.textContent = lunchOpen ? "Mittag jetzt bestellbar" : closedBadgeText(LUNCH_HOURS);
+    lunchBadge.textContent = MENU_MODE === "alle" ? "Testmodus: immer bestellbar" : lunchOpen ? "Mittag jetzt bestellbar" : closedBadgeText(LUNCH_HOURS);
     lunchBadge.classList.toggle("closed", !lunchOpen);
   }
   if (lunchMessage) {
@@ -188,7 +188,7 @@ function updateMenuAvailability() {
       : `Das Mittagsmenü bleibt sichtbar. Kaufen können Sie diese Gerichte ${LUNCH_HOURS_TEXT}.`;
   }
   if (dinnerBadge) {
-    dinnerBadge.textContent = dinnerOpen ? "Speisekarte jetzt bestellbar" : closedBadgeText(DINNER_HOURS);
+    dinnerBadge.textContent = MENU_MODE === "alle" ? "Testmodus: immer bestellbar" : dinnerOpen ? "Speisekarte jetzt bestellbar" : closedBadgeText(DINNER_HOURS);
     dinnerBadge.classList.toggle("closed", !dinnerOpen);
   }
   if (dinnerMessage) {
@@ -550,10 +550,15 @@ function normalizeText(value) {
 }
 
 function quickPool() {
-  const active = activeMenu();
-  if (active === "lunch") return lunchMenu;
-  if (active === "dinner") return dinnerMenu;
+  const lunchOpen = isLunchOpenNow();
+  const dinnerOpen = isDinnerOpenNow();
+  if (lunchOpen && !dinnerOpen) return lunchMenu;
+  if (dinnerOpen && !lunchOpen) return dinnerMenu;
   return [...dinnerMenu, ...lunchMenu];
+}
+
+function quickShowsBothMenus() {
+  return isLunchOpenNow() === isDinnerOpenNow();
 }
 
 function searchQuick(query) {
@@ -563,9 +568,11 @@ function searchQuick(query) {
   const pool = quickPool();
   if (tokens.every((token) => /\d/.test(token) && /^[a-z]{0,2}\d+$/i.test(token))) {
     state.quickMode = "codes";
-    return tokens.map((token) => {
-      const item = pool.find((entry) => entry.code.toLowerCase() === token.toLowerCase());
-      return item ? { id: item.id, sauce: "", added: false } : { missing: token };
+    return tokens.flatMap((token) => {
+      const key = token.toLowerCase();
+      const byId = pool.filter((entry) => entry.id.toLowerCase() === key && entry.code.toLowerCase() !== key);
+      const items = byId.length ? byId : pool.filter((entry) => entry.code.toLowerCase() === key);
+      return items.length ? items.map((item) => ({ id: item.id, sauce: "", added: false })) : [{ missing: token }];
     });
   }
   state.quickMode = "names";
@@ -575,7 +582,7 @@ function searchQuick(query) {
       const text = normalizeText(`${item.code} ${item.name} ${item.category}`);
       return words.every((word) => text.includes(word));
     })
-    .slice(0, 8)
+    .slice(0, quickShowsBothMenus() ? 12 : 8)
     .map((item) => ({ id: item.id, sauce: "", added: false }));
 }
 
@@ -600,6 +607,7 @@ function renderQuickResults() {
           <div class="quick-row-main">
             <span class="code">${escapeHtml(item.code)}</span>
             <strong>${escapeHtml(item.name)}</strong>
+            ${quickShowsBothMenus() ? `<span class="tag">${isLunchItem(item.id) ? "Mittag" : "Abend"}</span>` : ""}
             <span class="price">${euro.format(item.price)}</span>
           </div>
           ${item.sauces && !row.added ? saucePicker(item, open ? "" : "disabled", { name: `quick-sauce-${index}`, chosen: row.sauce, attr: `data-quick-sauce="${index}"` }) : ""}
@@ -889,11 +897,11 @@ function closedBadgeText(slots) {
 }
 
 function isLunchOpenNow() {
-  return activeMenu() === "lunch";
+  return MENU_MODE === "alle" || activeMenu() === "lunch";
 }
 
 function isDinnerOpenNow() {
-  return activeMenu() === "dinner";
+  return MENU_MODE === "alle" || activeMenu() === "dinner";
 }
 
 function isItemOrderableNow(id) {
