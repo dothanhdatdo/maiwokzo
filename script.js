@@ -12,7 +12,8 @@ const LUNCH_HOURS = [
   { days: [1, 2, 3, 4, 5], start: "11:00", end: "17:00" }
 ];
 const DINNER_HOURS = [
-  { days: [1, 2, 3, 4, 5, 6], start: "17:00", end: "21:00" }
+  { days: [1, 2, 3, 4, 5], start: "17:00", end: "21:00" },
+  { days: [6], start: "11:00", end: "21:00" }
 ];
 // Manuell umschalten: "auto" = nach Uhrzeit, "mittag" = nur Mittagsmenü, "abend" = nur Speisekarte.
 const MENU_MODE = "auto";
