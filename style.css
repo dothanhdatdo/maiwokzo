@@ -181,6 +181,9 @@ textarea:focus-visible {
 }
 
 .brand img { width: 58px; height: 45px; object-fit: contain; }
+.brand span,
+.main-nav a,
+.site-header > .btn { white-space: nowrap; }
 .brand:hover {
   color: var(--lacquer);
   transform: translateY(-1px);
@@ -1649,6 +1652,12 @@ textarea { resize: vertical; }
     transform: none;
     filter: none;
   }
+}
+
+@media (max-width: 1180px) {
+  .site-header { gap: 12px; padding-left: 20px; padding-right: 20px; }
+  .main-nav { font-size: 0.84rem; gap: 0; }
+  .main-nav a { padding: 8px 6px; }
 }
 
 @media (max-width: 1120px) {
