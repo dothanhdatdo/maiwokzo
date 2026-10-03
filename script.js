@@ -941,6 +941,9 @@ function isLunchItem(id) {
 }
 
 function setDefaultDates() {
+  if (MENU_MODE === "alle") {
+    $$('input[name="pickupTime"]').forEach((input) => { input.removeAttribute("min"); input.removeAttribute("max"); });
+  }
   const iso = getBerlinDateISO();
   $$('input[type="date"]').forEach((input) => {
     input.min = iso;
