@@ -400,6 +400,16 @@ function sauceSummary(cartItem) {
   return `Saucen: ${[...counts].map(([sauce, count]) => `${count}x ${sauce}`).join(", ")}`;
 }
 
+// Gericht mit Größe (Box to go B1-B5: Klein/Groß/Mega) anzeigen, z. B. "Bratnudeln mit Gemüse und Ei (Klein)".
+function displayName(item) {
+  return item.size ? `${item.name} (${item.size})` : item.name;
+}
+
+// Suchkürzel: Code plus Anfangsbuchstabe der Größe, z. B. "B1K" für B1 Klein.
+function shortCode(item) {
+  return item.size ? `${item.code}${item.size[0]}` : item.code;
+}
+
 function findItem(id) {
   return [...lunchMenu, ...dinnerMenu].find((item) => item.id === id);
 }
@@ -476,7 +486,7 @@ function renderCart() {
     return `
       <div class="cart-item" data-cart-key="${escapeHtml(cartItem.id)}">
         <div class="cart-item-main">
-          <strong>${escapeHtml(item.code || item.id)} ${escapeHtml(item.name)}</strong>
+          <strong>${escapeHtml(shortCode(item))} ${escapeHtml(displayName(item))}</strong>
           <strong>${euro.format(item.price * cartItem.qty)}</strong>
         </div>${sauceSelect}
         <div class="cart-controls">
@@ -578,12 +588,13 @@ function searchQuick(query) {
   state.quickMode = "";
   if (!tokens.length) return [];
   const pool = quickPool();
-  if (tokens.every((token) => /\d/.test(token) && /^[a-z]{0,2}\d+$/i.test(token))) {
+  if (tokens.every((token) => /^[a-z]{0,2}\d+-?[a-z]?$/i.test(token))) {
     state.quickMode = "codes";
     return tokens.flatMap((token) => {
-      const key = token.toLowerCase();
-      const byId = pool.filter((entry) => entry.id.toLowerCase() === key && entry.code.toLowerCase() !== key);
-      const items = byId.length ? byId : pool.filter((entry) => entry.code.toLowerCase() === key);
+      const key = token.toLowerCase().replace("-", "");
+      const bySize = pool.filter((entry) => entry.size && shortCode(entry).toLowerCase() === key);
+      const byId = pool.filter((entry) => entry.id.toLowerCase().replace("-", "") === key && entry.code.toLowerCase() !== key);
+      const items = bySize.length ? bySize : byId.length ? byId : pool.filter((entry) => entry.code.toLowerCase() === key);
       return items.length ? items.map((item) => ({ id: item.id, sauce: "", added: false })) : [{ missing: token }];
     });
   }
@@ -591,7 +602,7 @@ function searchQuick(query) {
   const words = normalizeText(query).split(/\s+/).filter(Boolean);
   return pool
     .filter((item) => {
-      const text = normalizeText(`${item.code} ${item.name} ${item.category}`);
+      const text = normalizeText(`${item.code} ${shortCode(item)} ${item.name} ${item.size || ""} ${item.category}`);
       return words.every((word) => text.includes(word));
     })
     .slice(0, quickShowsBothMenus() ? 12 : 8)
@@ -617,8 +628,8 @@ function renderQuickResults() {
       return `
         <div class="quick-row${row.added ? " is-added" : ""}" data-quick-row="${index}">
           <div class="quick-row-main">
-            <span class="code">${escapeHtml(item.code)}</span>
-            <strong>${escapeHtml(item.name)}</strong>
+            <span class="code">${escapeHtml(shortCode(item))}</span>
+            <strong>${escapeHtml(displayName(item))}</strong>
             ${quickShowsBothMenus() ? `<span class="tag">${isLunchItem(item.id) ? "Mittag" : "Abend"}</span>` : ""}
             <span class="price">${euro.format(item.price)}</span>
           </div>
@@ -671,7 +682,7 @@ function addQuickRows(rows) {
     addToCart(row.id, null, row.sauce);
     row.added = true;
   });
-  const names = orderable.map((row) => findItem(row.id).code).join(", ");
+  const names = orderable.map((row) => shortCode(findItem(row.id))).join(", ");
   const cartCount = state.cart.reduce((sum, cartItem) => sum + cartItem.qty, 0);
   const added = `${orderable.length === 1 ? "Gericht" : `${orderable.length} Gerichte`} (${names}) in den Warenkorb gelegt. Warenkorb: ${cartCount} ${cartCount === 1 ? "Gericht" : "Gerichte"} · ${euro.format(cartTotal())}.`;
   if (state.quickRows.every((row) => row.missing || row.added || !isItemOrderableNow(row.id))) {
@@ -824,14 +835,14 @@ function handleOrder(event) {
   if (withoutSauce) {
     const item = findItem(withoutSauce.id);
     openCart();
-    return showNotice($("#orderNotice"), `Bitte wählen Sie im Warenkorb für jede Portion von ${item.code} ${item.name} eine Sauce.`, true);
+    return showNotice($("#orderNotice"), `Bitte wählen Sie im Warenkorb für jede Portion von ${item.code} ${displayName(item)} eine Sauce.`, true);
   }
   const pickupProblem = pickupError(data);
   if (pickupProblem) return showNotice($("#orderNotice"), pickupProblem, true);
   if (!form.checkValidity()) return showNotice($("#orderNotice"), "Bitte füllen Sie alle Pflichtfelder korrekt aus.", true);
   const lines = state.cart.map((cartItem) => {
     const item = findItem(cartItem.id);
-    return `${cartItem.qty}x ${item.code || item.id} ${item.name}${cartItem.sauces ? ` - ${sauceSummary(cartItem)}` : ""} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
+    return `${cartItem.qty}x ${shortCode(item)} ${displayName(item)}${cartItem.sauces ? ` - ${sauceSummary(cartItem)}` : ""} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
   });
   const message = [
     "Bestellanfrage Maiwok Zo Freiburg", "",
