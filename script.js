@@ -1,17 +1,26 @@
 const RESTAURANT = {
   name: "Maiwok Zo Freiburg",
-  phoneDisplay: "+49 177 3943060",
+  phoneDisplay: "0761 89730160",
+  phone: "+4976189730160",
   whatsapp: "491773943060",
   email: "maiwokzo@gmail.com",
   timezone: "Europe/Berlin"
 };
 
-// Bestellzeiten: hier ändern (Uhrzeit im Format "HH:MM", Tage: 1 = Montag ... 7 = Sonntag).
-// Jede Zeile ist ein Zeitfenster. Mittags ist nur das Mittagsmenü bestellbar, sonst nur die Speisekarte.
+// Zeiten hier ändern (Uhrzeit im Format "HH:MM", Tage: 1 = Montag ... 7 = Sonntag). Jede Zeile ist ein Zeitfenster.
+// Bestellzeiten: wann online bestellt werden kann. Mittags nur Mittagsmenü, sonst nur Speisekarte.
 const LUNCH_HOURS = [
-  { days: [1, 2, 3, 4, 5], start: "11:00", end: "17:00" }
+  { days: [1, 2, 3, 4, 5], start: "07:00", end: "17:00" }
 ];
 const DINNER_HOURS = [
+  { days: [1, 2, 3, 4, 5], start: "17:00", end: "22:00" },
+  { days: [6], start: "07:00", end: "22:00" }
+];
+// Abholzeiten: wann die Bestellung abgeholt werden kann ("end" ist die letzte mögliche Abholzeit).
+const LUNCH_PICKUP = [
+  { days: [1, 2, 3, 4, 5], start: "11:00", end: "16:59" }
+];
+const DINNER_PICKUP = [
   { days: [1, 2, 3, 4, 5], start: "17:00", end: "21:00" },
   { days: [6], start: "11:00", end: "21:00" }
 ];
@@ -19,6 +28,8 @@ const DINNER_HOURS = [
 const MENU_MODE = "auto";
 const LUNCH_HOURS_TEXT = hoursText(LUNCH_HOURS);
 const DINNER_HOURS_TEXT = hoursText(DINNER_HOURS);
+const LUNCH_PICKUP_TEXT = hoursText(LUNCH_PICKUP);
+const DINNER_PICKUP_TEXT = hoursText(DINNER_PICKUP);
 
 const EMAIL_ENDPOINT = "";
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
@@ -184,8 +195,8 @@ function updateMenuAvailability() {
   }
   if (lunchMessage) {
     lunchMessage.textContent = lunchOpen
-      ? "Das Mittagsmenü ist jetzt bestellbar."
-      : `Das Mittagsmenü bleibt sichtbar. Kaufen können Sie diese Gerichte ${LUNCH_HOURS_TEXT}.`;
+      ? `Das Mittagsmenü ist jetzt bestellbar. Abholung ${LUNCH_PICKUP_TEXT}.`
+      : `Das Mittagsmenü bleibt sichtbar. Bestellen können Sie ${LUNCH_HOURS_TEXT}, Abholung ${LUNCH_PICKUP_TEXT}.`;
   }
   if (dinnerBadge) {
     dinnerBadge.textContent = dinnerOpen ? "Speisekarte jetzt bestellbar" : closedBadgeText(DINNER_HOURS);
@@ -193,8 +204,8 @@ function updateMenuAvailability() {
   }
   if (dinnerMessage) {
     dinnerMessage.textContent = dinnerOpen
-      ? "Die Speisekarte ist jetzt bestellbar."
-      : `Die Speisekarte bleibt sichtbar. Kaufen können Sie diese Gerichte ${DINNER_HOURS_TEXT}.`;
+      ? `Die Speisekarte ist jetzt bestellbar. Abholung ${DINNER_PICKUP_TEXT}.`
+      : `Die Speisekarte bleibt sichtbar. Bestellen können Sie ${DINNER_HOURS_TEXT}, Abholung ${DINNER_PICKUP_TEXT}.`;
   }
   renderLunchMenu(lunchOpen);
   renderDinnerMenu(dinnerOpen);
@@ -691,30 +702,69 @@ function persistCart() {
   sessionStorage.setItem("maiWokCart", JSON.stringify(state.cart));
 }
 
+function renderOrderTimes() {
+  const node = $("[data-order-times]");
+  if (!node) return;
+  node.innerHTML = `
+    <li><strong>Mittagsmenü</strong> bestellen ${escapeHtml(LUNCH_HOURS_TEXT)}, abholen ${escapeHtml(LUNCH_PICKUP_TEXT)}.</li>
+    <li><strong>Speisekarte</strong> bestellen ${escapeHtml(DINNER_HOURS_TEXT)}, abholen ${escapeHtml(DINNER_PICKUP_TEXT)}.</li>
+  `;
+}
+
 function initForms() {
+  renderOrderTimes();
   $("#orderForm")?.addEventListener("submit", handleOrder);
-  $('#orderForm [name="pickupDate"]')?.addEventListener("change", updatePickupWindow);
+  $('#orderForm [name="pickupDate"]')?.addEventListener("change", () => {
+    state.pickupDateTouched = true;
+    updatePickupWindow();
+  });
 }
 
 // Abholzeit richtet sich nach dem Warenkorb: Mittagsgerichte 11:00-16:59, Speisekarte 17:00-21:00 (samstags ab 11:00).
+function cartPickupSlots() {
+  return state.cart.some((cartItem) => isLunchItem(cartItem.id)) ? LUNCH_PICKUP : DINNER_PICKUP;
+}
+
+function weekdayOf(dateISO) {
+  return new Date(`${dateISO}T12:00:00Z`).getUTCDay() || 7;
+}
+
+// Nächster Tag, an dem die Bestellung noch abgeholt werden kann (heute nur, wenn das Zeitfenster noch nicht vorbei ist).
+function nextPickupDate(slots) {
+  const now = getBerlinParts();
+  for (let offset = 0; offset < 8; offset += 1) {
+    const iso = getBerlinDateISO(new Date(Date.now() + offset * 86400000));
+    const slot = slots.find((entry) => entry.days.includes(weekdayOf(iso)));
+    if (!slot) continue;
+    if (offset === 0 && now.hour * 60 + now.minute > toMinutes(slot.end)) continue;
+    return iso;
+  }
+  return getBerlinDateISO();
+}
+
 function pickupWindow(dateISO) {
   if (!state.cart.length) return null;
   const isLunch = state.cart.some((cartItem) => isLunchItem(cartItem.id));
-  const slots = isLunch ? LUNCH_HOURS : DINNER_HOURS;
-  const weekday = dateISO ? (new Date(`${dateISO}T12:00:00Z`).getUTCDay() || 7) : getBerlinParts().weekday;
+  const slots = cartPickupSlots();
+  const weekday = dateISO ? weekdayOf(dateISO) : getBerlinParts().weekday;
   const slot = slots.find((entry) => entry.days.includes(weekday));
   const label = isLunch ? "Mittagsgerichte" : "Gerichte der Speisekarte";
   if (!slot) return { label, closed: true };
-  const last = toMinutes(slot.end) - 1;
-  const end = `${String(Math.floor(last / 60)).padStart(2, "0")}:${String(last % 60).padStart(2, "0")}`;
-  return { label, start: slot.start, end: isLunch ? end : slot.end };
+  return { label, start: slot.start, end: slot.end };
 }
 
 function updatePickupWindow() {
   const input = $('#orderForm [name="pickupTime"]');
   const hint = $("#pickupHint");
   if (!input || !hint) return;
-  const pickup = pickupWindow($('#orderForm [name="pickupDate"]')?.value);
+  const dateInput = $('#orderForm [name="pickupDate"]');
+  let moved = false;
+  if (dateInput && state.cart.length && !state.pickupDateTouched) {
+    const next = nextPickupDate(cartPickupSlots());
+    moved = next !== getBerlinDateISO();
+    dateInput.value = next;
+  }
+  const pickup = pickupWindow(dateInput?.value);
   if (!pickup) {
     input.min = "11:00";
     input.max = "21:00";
@@ -727,7 +777,7 @@ function updatePickupWindow() {
   }
   input.min = pickup.start;
   input.max = pickup.end;
-  hint.textContent = `Abholung für ${pickup.label}: ${pickup.start}-${pickup.end} Uhr`;
+  hint.textContent = `Abholung für ${pickup.label}: ${pickup.start}-${pickup.end} Uhr${moved ? " (heute nicht mehr möglich, Abholdatum auf den nächsten möglichen Tag gesetzt)" : ""}`;
 }
 
 function pickupError(data) {
@@ -735,11 +785,15 @@ function pickupError(data) {
   if (!pickup || !data.pickupTime) return "";
   if (pickup.closed) return `${pickup.label} können am gewählten Tag nicht abgeholt werden.`;
   const time = toMinutes(data.pickupTime);
+  const now = getBerlinParts();
+  const nowMinutes = now.hour * 60 + now.minute;
+  if (data.pickupDate === getBerlinDateISO() && nowMinutes > toMinutes(pickup.end)) {
+    return `Heute ist für ${pickup.label} keine Abholung mehr möglich (bis ${pickup.end} Uhr). Bitte wählen Sie ein anderes Abholdatum.`;
+  }
   if (time < toMinutes(pickup.start) || time > toMinutes(pickup.end)) {
     return `Bitte wählen Sie für ${pickup.label} eine Abholzeit zwischen ${pickup.start} und ${pickup.end} Uhr.`;
   }
-  const now = getBerlinParts();
-  if (data.pickupDate === getBerlinDateISO() && time < now.hour * 60 + now.minute) {
+  if (data.pickupDate === getBerlinDateISO() && time < nowMinutes) {
     return "Die gewählte Abholzeit liegt in der Vergangenheit.";
   }
   return "";
