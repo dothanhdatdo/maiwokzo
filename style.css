@@ -1387,12 +1387,27 @@ h2 {
   border: 1px solid oklch(0.55 0.10 28 / 0.16);
 }
 
-.pickup-note strong,
-.pickup-note span {
+.pickup-times { text-align: left; }
+
+.pickup-note ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.pickup-note li strong {
+  display: inline;
+  margin: 0;
+  color: var(--ink);
+}
+
+.pickup-note > strong,
+.pickup-note > span {
   display: block;
 }
 
-.pickup-note strong {
+.pickup-note > strong {
   margin-bottom: 6px;
   color: var(--red);
 }
