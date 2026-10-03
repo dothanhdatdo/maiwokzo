@@ -290,6 +290,8 @@ textarea:focus-visible {
 }
 .btn-primary:hover { background: linear-gradient(135deg, oklch(0.46 0.16 28), var(--red-dark)); }
 .btn-light { background: oklch(1 0 0 / 0.76); color: var(--red); border: 1px solid oklch(0.42 0.15 28 / 0.18); }
+.btn-route { gap: 8px; }
+.btn-icon { flex: none; }
 .btn-gold, .btn-reserve {
   background: linear-gradient(135deg, var(--champagne), oklch(0.67 0.115 80));
   color: #1e1712;
