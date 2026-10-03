@@ -1,5 +1,5 @@
 const RESTAURANT = {
-  name: "Mai Wok",
+  name: "Maiwok Zo Freiburg",
   phoneDisplay: "+49 177 3943060",
   whatsapp: "491773943060",
   email: "maiwokzo@gmail.com",
@@ -459,7 +459,7 @@ function handleOrder(event) {
     return `${cartItem.qty}x ${item.code || item.id} ${item.name} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
   });
   const message = [
-    "Bestellanfrage Mai Wok", "",
+    "Bestellanfrage Maiwok Zo Freiburg", "",
     `Name: ${data.name}`,
     `Telefon: ${data.phone}`,
     `E-Mail: ${data.email}`, "",
@@ -469,7 +469,7 @@ function handleOrder(event) {
     `Zahlungsmethode: ${data.payment || "Nicht angegeben"}`,
     `Hinweise: ${data.notes || "-"}`
   ].join("\n");
-  const links = sendMessage("Bestellung Mai Wok", message);
+  const links = sendMessage("Bestellung Maiwok Zo Freiburg", message);
   showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Falls Sie auch per E-Mail senden möchten:", links);
 }
 
@@ -494,7 +494,7 @@ function initGallery() {
   if (!gallery) return;
   gallery.innerHTML = imagePool.slice(0, 16).map((src, index) => `
     <button class="gallery-item" type="button" data-gallery="${src}">
-      <img src="${src}" alt="Mai Wok Gericht ${index + 1}" loading="lazy">
+      <img src="${src}" alt="Maiwok Zo Freiburg Gericht ${index + 1}" loading="lazy">
     </button>
   `).join("");
   const lightbox = $("#lightbox");
