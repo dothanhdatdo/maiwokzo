@@ -8,15 +8,16 @@ const RESTAURANT = {
 };
 
 // Zeiten hier ändern (Uhrzeit im Format "HH:MM", Tage: 1 = Montag ... 7 = Sonntag). Jede Zeile ist ein Zeitfenster.
-// Bestellzeiten: wann online bestellt werden kann. Mittags nur Mittagsmenü, sonst nur Speisekarte.
+// Bestellzeiten: wann online bestellt werden kann. Überschneiden sich die Zeiten, sind beide Karten bestellbar.
 const LUNCH_HOURS = [
   { days: [1, 2, 3, 4, 5], start: "07:00", end: "17:00" }
 ];
 const DINNER_HOURS = [
-  { days: [1, 2, 3, 4, 5], start: "17:00", end: "22:00" },
+  { days: [1, 2, 3, 4, 5], start: "16:00", end: "22:00" },
   { days: [6], start: "07:00", end: "22:00" }
 ];
 // Abholzeiten: wann die Bestellung abgeholt werden kann ("end" ist die letzte mögliche Abholzeit).
+// Enthält der Warenkorb ein Gericht der Speisekarte, gilt die Abholzeit der Speisekarte.
 const LUNCH_PICKUP = [
   { days: [1, 2, 3, 4, 5], start: "11:00", end: "16:59" }
 ];
@@ -178,9 +179,8 @@ function renderDinnerMenu(open = isDinnerOpenNow()) {
 }
 
 function updateMenuAvailability() {
-  const active = activeMenu();
-  const lunchOpen = active === "lunch";
-  const dinnerOpen = active === "dinner";
+  const lunchOpen = isLunchOpenNow();
+  const dinnerOpen = isDinnerOpenNow();
   const section = $("[data-lunch-section]");
   const lunchBadge = $("[data-lunch-badge]");
   const lunchMessage = $("[data-lunch-message]");
@@ -562,10 +562,15 @@ function normalizeText(value) {
 }
 
 function quickPool() {
-  const active = activeMenu();
-  if (active === "lunch") return lunchMenu;
-  if (active === "dinner") return dinnerMenu;
-  return [...dinnerMenu, ...lunchMenu];
+  const lunchOpen = isLunchOpenNow();
+  const dinnerOpen = isDinnerOpenNow();
+  if (lunchOpen && !dinnerOpen) return lunchMenu;
+  if (dinnerOpen && !lunchOpen) return dinnerMenu;
+  return [...lunchMenu, ...dinnerMenu];
+}
+
+function quickShowsBothMenus() {
+  return isLunchOpenNow() === isDinnerOpenNow();
 }
 
 function searchQuick(query) {
@@ -575,9 +580,11 @@ function searchQuick(query) {
   const pool = quickPool();
   if (tokens.every((token) => /\d/.test(token) && /^[a-z]{0,2}\d+$/i.test(token))) {
     state.quickMode = "codes";
-    return tokens.map((token) => {
-      const item = pool.find((entry) => entry.code.toLowerCase() === token.toLowerCase());
-      return item ? { id: item.id, sauce: "", added: false } : { missing: token };
+    return tokens.flatMap((token) => {
+      const key = token.toLowerCase();
+      const byId = pool.filter((entry) => entry.id.toLowerCase() === key && entry.code.toLowerCase() !== key);
+      const items = byId.length ? byId : pool.filter((entry) => entry.code.toLowerCase() === key);
+      return items.length ? items.map((item) => ({ id: item.id, sauce: "", added: false })) : [{ missing: token }];
     });
   }
   state.quickMode = "names";
@@ -587,7 +594,7 @@ function searchQuick(query) {
       const text = normalizeText(`${item.code} ${item.name} ${item.category}`);
       return words.every((word) => text.includes(word));
     })
-    .slice(0, 8)
+    .slice(0, quickShowsBothMenus() ? 12 : 8)
     .map((item) => ({ id: item.id, sauce: "", added: false }));
 }
 
@@ -612,6 +619,7 @@ function renderQuickResults() {
           <div class="quick-row-main">
             <span class="code">${escapeHtml(item.code)}</span>
             <strong>${escapeHtml(item.name)}</strong>
+            ${quickShowsBothMenus() ? `<span class="tag">${isLunchItem(item.id) ? "Mittag" : "Abend"}</span>` : ""}
             <span class="price">${euro.format(item.price)}</span>
           </div>
           ${item.sauces && !row.added ? saucePicker(item, open ? "" : "disabled", { name: `quick-sauce-${index}`, chosen: row.sauce, attr: `data-quick-sauce="${index}"` }) : ""}
@@ -721,8 +729,12 @@ function initForms() {
 }
 
 // Abholzeit richtet sich nach dem Warenkorb: Mittagsgerichte 11:00-16:59, Speisekarte 17:00-21:00 (samstags ab 11:00).
+function cartHasDinnerItems() {
+  return state.cart.some((cartItem) => !isLunchItem(cartItem.id));
+}
+
 function cartPickupSlots() {
-  return state.cart.some((cartItem) => isLunchItem(cartItem.id)) ? LUNCH_PICKUP : DINNER_PICKUP;
+  return cartHasDinnerItems() ? DINNER_PICKUP : LUNCH_PICKUP;
 }
 
 function weekdayOf(dateISO) {
@@ -744,7 +756,7 @@ function nextPickupDate(slots) {
 
 function pickupWindow(dateISO) {
   if (!state.cart.length) return null;
-  const isLunch = state.cart.some((cartItem) => isLunchItem(cartItem.id));
+  const isLunch = !cartHasDinnerItems();
   const slots = cartPickupSlots();
   const weekday = dateISO ? weekdayOf(dateISO) : getBerlinParts().weekday;
   const slot = slots.find((entry) => entry.days.includes(weekday));
@@ -973,13 +985,6 @@ function getBerlinParts() {
   return { hour: Number(parts.hour), minute: Number(parts.minute), weekday: weekdayMap[String(parts.weekday).replace(".", "")] || 1 };
 }
 
-function activeMenu(now = getBerlinParts()) {
-  if (MENU_MODE === "mittag") return "lunch";
-  if (MENU_MODE === "abend") return "dinner";
-  if (isWithinHours(LUNCH_HOURS, now)) return "lunch";
-  if (isWithinHours(DINNER_HOURS, now)) return "dinner";
-  return null;
-}
 
 function isWithinHours(slots, now) {
   const minutes = now.hour * 60 + now.minute;
@@ -1000,12 +1005,14 @@ function closedBadgeText(slots) {
   return slot ? `Bestellbar ${slot.start}-${slot.end} Uhr` : "Heute nicht bestellbar";
 }
 
-function isLunchOpenNow() {
-  return activeMenu() === "lunch";
+function isLunchOpenNow(now = getBerlinParts()) {
+  if (MENU_MODE !== "auto") return MENU_MODE === "mittag";
+  return isWithinHours(LUNCH_HOURS, now);
 }
 
-function isDinnerOpenNow() {
-  return activeMenu() === "dinner";
+function isDinnerOpenNow(now = getBerlinParts()) {
+  if (MENU_MODE !== "auto") return MENU_MODE === "abend";
+  return isWithinHours(DINNER_HOURS, now);
 }
 
 function isItemOrderableNow(id) {
