@@ -4,7 +4,8 @@
 //
 // type:    "image" hoặc "video"
 // seconds: thời gian hiển thị (ảnh mặc định 15s; video mặc định chạy hết rồi chuyển)
-// when:    danh sách khung giờ được chiếu. Mỗi khung: days (0 = Chủ nhật, 1 = Thứ 2 … 6 = Thứ 7),
+// when:    danh sách khung giờ được chiếu. Mỗi khung: days (0 = Chủ nhật, 1 = Thứ 2 … 6 = Thứ 7)
+//          hoặc date "YYYY-MM-DD" (một ngày cụ thể),
 //          from/to "HH:MM" theo giờ của máy phát. Ngoài mọi khung giờ: màn hình đen.
 // Một mục duy nhất thì hiển thị/lặp mãi.
 
@@ -13,13 +14,16 @@ var T7 = [6];
 
 // Thứ 2–6: buổi trưa 11:00–16:45 (tivi 3, 4 đến 17:00), buổi tối 16:45–21:30.
 // Thứ 7: chỉ chế độ buổi tối, 11:00–21:30. Chủ nhật: đóng cửa, tất cả tắt.
-var TRUA = [{ days: T2_T6, from: "11:00", to: "16:45" }];
-var TRUA_TV34 = [{ days: T2_T6, from: "11:00", to: "17:00" }];
+// Riêng ngày 05.10.2026: bật màn hình món từ 08:00 để thử (xóa dòng TEST sau ngày đó).
+var TEST = { date: "2026-10-05", from: "08:00", to: "11:00" };
+
+var TRUA = [{ days: T2_T6, from: "11:00", to: "16:45" }, TEST];
+var TRUA_TV34 = [{ days: T2_T6, from: "11:00", to: "17:00" }, TEST];
 var TOI = [
   { days: T2_T6, from: "16:45", to: "21:30" },
   { days: T7, from: "11:00", to: "21:30" }
 ];
-var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }];
+var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }, TEST];
 
 window.TV_PLAYLISTS = {
   1: [
