@@ -30,7 +30,7 @@ var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }, TEST, TES
 
 window.TV_PLAYLISTS = {
   1: [
-    { type: "image", src: "media/tv1.png", when: TRUA },
+    { type: "video", src: "media/tv1.mp4", when: TRUA },
     { type: "video", src: "media/tv1-toi-1.mp4", when: TOI },
     { type: "video", src: "media/tv1-toi-2.mp4", when: TOI }
   ],
