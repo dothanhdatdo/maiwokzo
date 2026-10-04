@@ -1,5 +1,5 @@
-// Nội dung cho từng tivi. Mở trang: tv/?tv=1 (2, 3, 4)
-// Nguồn: Canva "zo- übersicht (A4 (Querformat))" — trang 1–4 = tivi 1–4,
+// Nội dung cho từng tivi. Mở trang: tv/?tv=1 (2, 3, 5)
+// Nguồn: Canva "zo- übersicht (A4 (Querformat))" — trang 1–3 = tivi 1–3, trang 4 = tivi 5,
 // trang 5–6 là chế độ buổi tối của tivi 1.
 //
 // type:    "image" hoặc "video"
@@ -12,7 +12,7 @@
 var T2_T6 = [1, 2, 3, 4, 5];
 var T7 = [6];
 
-// Thứ 2–6: buổi trưa 11:00–16:45 (tivi 3, 4 đến 17:00), buổi tối 16:45–21:30.
+// Thứ 2–6: buổi trưa 11:00–16:45 (tivi 3, 5 đến 17:00), buổi tối 16:45–21:30.
 // Thứ 7: chỉ chế độ buổi tối, 11:00–21:30. Chủ nhật: đóng cửa, tất cả tắt.
 // Riêng ngày 05.10.2026: bật màn hình món từ 08:00 để thử (xóa dòng TEST sau ngày đó).
 var TEST = { date: "2026-10-05", from: "08:00", to: "11:00" };
@@ -20,7 +20,7 @@ var TEST = { date: "2026-10-05", from: "08:00", to: "11:00" };
 var TEST_HOM_NAY = { date: "2026-10-04", from: "00:00", to: "24:00" };
 
 var TRUA = [{ days: T2_T6, from: "11:00", to: "16:45" }, TEST, TEST_HOM_NAY];
-var TRUA_TV34 = [{ days: T2_T6, from: "11:00", to: "17:00" }, TEST, TEST_HOM_NAY];
+var TRUA_TV35 = [{ days: T2_T6, from: "11:00", to: "17:00" }, TEST, TEST_HOM_NAY];
 var TOI = [
   { days: T2_T6, from: "16:45", to: "21:30" },
   { days: T7, from: "11:00", to: "21:30" },
@@ -35,6 +35,6 @@ window.TV_PLAYLISTS = {
     { type: "video", src: "media/tv1-toi-2.mp4", when: TOI }
   ],
   2: [{ type: "video", src: "media/tv2.mp4", when: CA_NGAY }],
-  3: [{ type: "video", src: "media/tv3.mp4", when: TRUA_TV34 }],
-  4: [{ type: "image", src: "media/tv4.png", when: TRUA_TV34 }]
+  3: [{ type: "video", src: "media/tv3.mp4", when: TRUA_TV35 }],
+  5: [{ type: "image", src: "media/tv5.png", when: TRUA_TV35 }]
 };
