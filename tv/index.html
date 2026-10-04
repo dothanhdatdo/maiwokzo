@@ -21,11 +21,13 @@
 (function () {
   var RELOAD_MS = 10 * 60 * 1000; // tải lại để nhận nội dung mới
   var IMAGE_SECONDS = 15;
-  var params = new URLSearchParams(location.search);
-  var tv = params.get("tv") || "1";
+  var tv = new URLSearchParams(location.search).get("tv") || "1";
   var stage = document.getElementById("stage");
   var started = Date.now();
-  var index = 0;
+  var playlist = [];
+  var active = [];
+  var index = -1;
+  var timer = null;
 
   // playlist.js luôn tải bản mới nhất, không dùng cache
   var s = document.createElement("script");
@@ -34,55 +36,67 @@
   s.onerror = function () { setTimeout(function () { location.reload(); }, 30000); };
   document.head.appendChild(s);
 
+  function minutes(hhmm) {
+    var p = String(hhmm).split(":");
+    return parseInt(p[0], 10) * 60 + parseInt(p[1] || "0", 10);
+  }
+
+  function inWindow(item) {
+    var d = new Date();
+    var now = d.getHours() * 60 + d.getMinutes();
+    var from = item.from ? minutes(item.from) : 0;
+    var to = item.to ? minutes(item.to) : 24 * 60;
+    return from <= to ? now >= from && now < to : now >= from || now < to;
+  }
+
+  function activeItems() { return playlist.filter(inWindow); }
+
+  function key(list) { return list.map(function (i) { return i.src; }).join("|"); }
+
   function bust(src) {
     return src + (src.indexOf("?") < 0 ? "?" : "&") + "v=" + Math.floor(started / RELOAD_MS);
   }
 
   function start() {
-    var list = (window.TV_PLAYLISTS || {})[tv] || [];
-    if (!list.length) {
-      stage.innerHTML = '<div id="empty">Chưa có nội dung cho tivi ' + tv + '</div>';
-      setTimeout(function () { location.reload(); }, RELOAD_MS);
+    playlist = (window.TV_PLAYLISTS || {})[tv] || [];
+    active = activeItems();
+    next();
+    // Mỗi phút: đổi khung giờ thì chuyển ngay; quá hạn thì tải lại khi đang hiển thị 1 mục
+    setInterval(function () {
+      var now = activeItems();
+      if (key(now) !== key(active)) { active = now; index = -1; next(); return; }
+      if (active.length <= 1 && Date.now() - started > RELOAD_MS) location.reload();
+    }, 60000);
+  }
+
+  function next() {
+    clearTimeout(timer);
+    if (Date.now() - started > RELOAD_MS && active.length > 1) { location.reload(); return; }
+    if (!active.length) {
+      stage.innerHTML = '<div id="empty">' + (playlist.length ? "" : "Chưa có nội dung cho tivi " + tv) + "</div>";
       return;
     }
-    show(list);
+    index = (index + 1) % active.length;
+    show(active[index], active.length === 1);
   }
 
-  function next(list) {
-    if (Date.now() - started > RELOAD_MS) { location.reload(); return; }
-    index = (index + 1) % list.length;
-    show(list);
-  }
-
-  function show(list) {
-    var item = list[index];
+  function show(item, single) {
     var el;
-    var single = list.length === 1;
-    var done = function () { next(list); };
-
     if (item.type === "video") {
       el = document.createElement("video");
       el.muted = true;
       el.autoplay = true;
       el.playsInline = true;
       el.loop = single && !item.seconds;
-      el.src = bust(item.src);
-      if (single && !item.seconds) {
-        setInterval(function () { if (Date.now() - started > RELOAD_MS) location.reload(); }, 60000);
-      } else if (item.seconds) {
-        setTimeout(done, item.seconds * 1000);
-      } else {
-        el.onended = done;
-      }
-      el.onerror = function () { setTimeout(done, 5000); };
+      if (item.seconds) timer = setTimeout(next, item.seconds * 1000);
+      else if (!single) el.onended = next;
     } else {
       el = document.createElement("img");
       el.alt = "";
-      el.src = bust(item.src);
-      el.onerror = function () { setTimeout(done, 5000); };
-      setTimeout(done, (item.seconds || (single ? RELOAD_MS / 1000 : IMAGE_SECONDS)) * 1000);
+      if (!single) timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
     }
-
+    el.onerror = function () { clearTimeout(timer); timer = setTimeout(next, 5000); };
+    el.src = bust(item.src);
     stage.innerHTML = "";
     stage.appendChild(el);
     if (el.play) { var p = el.play(); if (p && p.catch) p.catch(function () {}); }
