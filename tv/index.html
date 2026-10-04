@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mai Wok TV</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #stage { position: fixed; inset: 0; }
+  #stage img, #stage video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; background: #000;
+  }
+  #empty { color: #888; font: 4vh/1.4 sans-serif; display: grid; place-items: center; height: 100%; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+(function () {
+  var RELOAD_MS = 10 * 60 * 1000; // tải lại để nhận nội dung mới
+  var IMAGE_SECONDS = 15;
+  var params = new URLSearchParams(location.search);
+  var tv = params.get("tv") || "1";
+  var stage = document.getElementById("stage");
+  var started = Date.now();
+  var index = 0;
+
+  // playlist.js luôn tải bản mới nhất, không dùng cache
+  var s = document.createElement("script");
+  s.src = "playlist.js?v=" + Date.now();
+  s.onload = start;
+  s.onerror = function () { setTimeout(function () { location.reload(); }, 30000); };
+  document.head.appendChild(s);
+
+  function bust(src) {
+    return src + (src.indexOf("?") < 0 ? "?" : "&") + "v=" + Math.floor(started / RELOAD_MS);
+  }
+
+  function start() {
+    var list = (window.TV_PLAYLISTS || {})[tv] || [];
+    if (!list.length) {
+      stage.innerHTML = '<div id="empty">Chưa có nội dung cho tivi ' + tv + '</div>';
+      setTimeout(function () { location.reload(); }, RELOAD_MS);
+      return;
+    }
+    show(list);
+  }
+
+  function next(list) {
+    if (Date.now() - started > RELOAD_MS) { location.reload(); return; }
+    index = (index + 1) % list.length;
+    show(list);
+  }
+
+  function show(list) {
+    var item = list[index];
+    var el;
+    var single = list.length === 1;
+    var done = function () { next(list); };
+
+    if (item.type === "video") {
+      el = document.createElement("video");
+      el.muted = true;
+      el.autoplay = true;
+      el.playsInline = true;
+      el.loop = single && !item.seconds;
+      el.src = bust(item.src);
+      if (single && !item.seconds) {
+        setInterval(function () { if (Date.now() - started > RELOAD_MS) location.reload(); }, 60000);
+      } else if (item.seconds) {
+        setTimeout(done, item.seconds * 1000);
+      } else {
+        el.onended = done;
+      }
+      el.onerror = function () { setTimeout(done, 5000); };
+    } else {
+      el = document.createElement("img");
+      el.alt = "";
+      el.src = bust(item.src);
+      el.onerror = function () { setTimeout(done, 5000); };
+      setTimeout(done, (item.seconds || (single ? RELOAD_MS / 1000 : IMAGE_SECONDS)) * 1000);
+    }
+
+    stage.innerHTML = "";
+    stage.appendChild(el);
+    if (el.play) { var p = el.play(); if (p && p.catch) p.catch(function () {}); }
+  }
+})();
+</script>
+</body>
+</html>
