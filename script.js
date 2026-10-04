@@ -211,6 +211,8 @@ function updateMenuAvailability() {
   renderLunchMenu(lunchOpen);
   renderDinnerMenu(dinnerOpen);
   renderQuickResults();
+  updateLiveStatus();
+  renderPopular();
   renderCart();
 }
 
@@ -228,6 +230,86 @@ function renderLunchMenu(open = isLunchOpenNow()) {
   renderMenuPager("#lunchPager", pageData, "lunch");
   bindAddButtons(grid);
   observeMotionElements(grid);
+}
+
+// Live-Status im Hero: was gerade bestellbar ist bzw. wann es wieder losgeht.
+function nextOrderStart(now = getBerlinParts()) {
+  const nowMinutes = now.hour * 60 + now.minute;
+  for (let offset = 0; offset < 8; offset += 1) {
+    const weekday = ((now.weekday - 1 + offset) % 7) + 1;
+    const starts = [...LUNCH_HOURS, ...DINNER_HOURS]
+      .filter((slot) => slot.days.includes(weekday))
+      .map((slot) => toMinutes(slot.start))
+      .filter((start) => offset > 0 || start > nowMinutes)
+      .sort((a, b) => a - b);
+    if (starts.length) {
+      const time = `${String(Math.floor(starts[0] / 60)).padStart(2, "0")}:${String(starts[0] % 60).padStart(2, "0")}`;
+      const day = offset === 0 ? "heute" : offset === 1 ? "morgen" : WEEKDAY_SHORT[weekday];
+      return `${day} ab ${time} Uhr`;
+    }
+  }
+  return "";
+}
+
+function updateLiveStatus() {
+  const wrap = $("[data-live-status]");
+  const text = $("[data-live-text]");
+  if (!wrap || !text) return;
+  const lunch = isLunchOpenNow();
+  const dinner = isDinnerOpenNow();
+  const until = (slots) => todaySlot(slots)?.end;
+  if (lunch && dinner) text.textContent = "Mittag & Speisekarte jetzt bestellbar";
+  else if (lunch) text.textContent = `Mittagsmenü jetzt bestellbar · bis ${until(LUNCH_HOURS)} Uhr`;
+  else if (dinner) text.textContent = `Speisekarte jetzt bestellbar · bis ${until(DINNER_HOURS)} Uhr`;
+  else text.textContent = `Online-Bestellung wieder ${nextOrderStart()}`;
+  wrap.classList.toggle("is-closed", !lunch && !dinner);
+  const veggie = [...lunchMenu, ...dinnerMenu].filter((item) => item.tags.includes("vegetarisch") || item.tags.includes("vegan")).length;
+  const count = $("[data-veggie-count]");
+  if (count) count.textContent = `${Math.floor(veggie / 10) * 10}+`;
+}
+
+// "Beliebt in Freiburg": Gerichte mit Foto aus der gerade bestellbaren Karte, beliebte zuerst.
+function renderPopular() {
+  const track = $("[data-popular]");
+  if (!track) return;
+  const lunch = isLunchOpenNow();
+  const dinner = isDinnerOpenNow();
+  const pool = lunch && !dinner ? lunchMenu : dinner && !lunch ? dinnerMenu : [...dinnerMenu, ...lunchMenu];
+  const items = pool
+    .filter((item) => item.image && item.image !== logoImage)
+    .sort((a, b) => Number(b.tags.includes("beliebt")) - Number(a.tags.includes("beliebt")))
+    .slice(0, 10);
+  const section = track.closest(".popular");
+  if (section) section.hidden = items.length < 3;
+  track.innerHTML = items.map((item) => {
+    const open = isItemOrderableNow(item.id);
+    return `
+      <article class="popular-card">
+        <img src="${escapeHtml(thumbOf(item.image))}" alt="${escapeHtml(item.name)}" width="640" height="480" loading="lazy" decoding="async">
+        <div class="popular-body">
+          <span class="code">${escapeHtml(shortCode(item))}</span>
+          <h3>${escapeHtml(displayName(item))}</h3>
+          <div class="popular-foot">
+            <strong class="price">${euro.format(item.price)}</strong>
+            <button class="popular-add" type="button" data-popular-add="${escapeHtml(item.id)}" ${open ? "" : "disabled"} aria-label="${escapeHtml(item.name)} in den Warenkorb">${item.sauces ? "Sauce wählen" : "+"}</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+  $$("[data-popular-add]", track).forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = findItem(button.dataset.popularAdd);
+      if (item.sauces) {
+        const input = $("#quickSearch");
+        input.value = shortCode(item);
+        input.dispatchEvent(new Event("input"));
+        $("#schnellbestellung").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      addToCart(item.id, button);
+    });
+  });
 }
 
 function paginateItems(items, requestedPage) {
