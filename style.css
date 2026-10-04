@@ -1467,6 +1467,224 @@ textarea { resize: vertical; }
 
 .field-hint:empty { display: none; }
 
+.order-form {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: calc(var(--radius) * 2);
+  background: var(--surface);
+  box-shadow: 0 18px 40px oklch(0.32 0.05 52 / 0.12);
+}
+
+.order-form:focus-within { transform: none; }
+
+.order-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: calc(var(--radius) * 1.5);
+  background: linear-gradient(135deg, var(--red), var(--lacquer));
+  color: #fff;
+}
+
+.order-summary-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.order-summary strong { font-size: 1.1rem; }
+
+.order-summary.is-empty {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.order-summary-edit {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.form-step {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0 0 18px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.form-step legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.field > span,
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.field small { font-weight: 600; }
+
+.order-form input:not([type="radio"]),
+.order-form textarea {
+  min-height: 50px;
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--porcelain);
+  font-size: 1rem;
+}
+
+.order-form textarea { min-height: 70px; }
+
+.chip-group {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.time-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  max-height: 172px;
+  overflow-y: auto;
+}
+
+.chip {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--porcelain);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.chip small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.chip:hover { border-color: var(--red); }
+
+.chip.is-active {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+}
+
+.chip.is-active small { color: oklch(1 0 0 / 0.8); }
+
+.chip-time { padding: 8px 6px; }
+
+.chip-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  grid-column: 1 / -1;
+}
+
+.pay-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pay-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.pay-option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.pay-option span {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--porcelain);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.pay-option small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.pay-option input:checked + span {
+  border-color: var(--red);
+  background: oklch(0.95 0.045 28 / 0.75);
+  box-shadow: inset 0 0 0 1px var(--red);
+}
+
+.pay-option input:focus-visible + span,
+.chip:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.order-submit {
+  min-height: 56px;
+  font-size: 1.05rem;
+}
+
+.order-submit-note {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

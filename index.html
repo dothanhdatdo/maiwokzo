@@ -205,24 +205,64 @@
             <span>Die Bestellung wird als Anfrage vorbereitet. Bitte senden Sie die WhatsApp-Nachricht ab und holen Sie die Speisen in der Schwarzwaldstraße 78b ab.</span>
           </div>
         </div>
-        <form class="form-card" id="orderForm" novalidate>
-          <h3>Ihre Abholdaten</h3>
-          <label>Vor- und Nachname<input name="name" autocomplete="name" required></label>
-          <label>Telefonnummer<input name="phone" type="tel" autocomplete="tel" required></label>
-          <label>E-Mail-Adresse<input name="email" type="email" autocomplete="email" required></label>
-          <div class="form-row">
-            <label>Abholdatum<input name="pickupDate" type="date" required></label>
-            <label>Gewünschte Abholzeit<input name="pickupTime" type="time" min="11:00" max="21:00" required><span class="field-hint" id="pickupHint"></span></label>
+        <form class="form-card order-form" id="orderForm" novalidate>
+          <div class="order-summary" data-order-summary>
+            <div>
+              <span class="order-summary-label">Ihre Bestellung</span>
+              <strong data-summary-text>Noch keine Gerichte ausgewählt</strong>
+            </div>
+            <button class="order-summary-edit" type="button" data-open-cart>Warenkorb</button>
           </div>
-          <label>Zahlungsmethode
-            <select name="payment">
-              <option value="">Bitte wählen</option>
-              <option>Bar bei Abholung</option>
-              <option>Kartenzahlung bei Abholung</option>
-            </select>
-          </label>
-          <label>Bestellhinweise<textarea name="notes" rows="4" placeholder="z. B. ohne Koriander"></textarea></label>
-          <button class="btn btn-primary btn-full" type="submit">Bestellung abschicken</button>
+
+          <fieldset class="form-step">
+            <legend><span class="step-no">1</span>Kontakt</legend>
+            <label class="field">
+              <span>Vor- und Nachname</span>
+              <input name="name" autocomplete="name" placeholder="Max Mustermann" required>
+            </label>
+            <div class="form-row">
+              <label class="field">
+                <span>Telefonnummer</span>
+                <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="0761 …" required>
+              </label>
+              <label class="field">
+                <span>E-Mail-Adresse</span>
+                <input name="email" type="email" autocomplete="email" inputmode="email" placeholder="name@beispiel.de" required>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-step">
+            <legend><span class="step-no">2</span>Abholung</legend>
+            <input type="hidden" name="pickupDate">
+            <input type="hidden" name="pickupTime">
+            <span class="field-label">Tag</span>
+            <div class="chip-group" data-pickup-days role="radiogroup" aria-label="Abholtag"></div>
+            <span class="field-label">Uhrzeit</span>
+            <div class="chip-group time-chips" data-pickup-times role="radiogroup" aria-label="Abholzeit"></div>
+            <span class="field-hint" id="pickupHint"></span>
+          </fieldset>
+
+          <fieldset class="form-step">
+            <legend><span class="step-no">3</span>Zahlung &amp; Hinweise</legend>
+            <div class="pay-options" role="radiogroup" aria-label="Zahlungsmethode">
+              <label class="pay-option">
+                <input type="radio" name="payment" value="Bar bei Abholung">
+                <span><strong>Bar</strong><small>bei Abholung</small></span>
+              </label>
+              <label class="pay-option">
+                <input type="radio" name="payment" value="Kartenzahlung bei Abholung">
+                <span><strong>Karte</strong><small>bei Abholung</small></span>
+              </label>
+            </div>
+            <label class="field">
+              <span>Bestellhinweise <small>(optional)</small></span>
+              <textarea name="notes" rows="2" placeholder="z. B. ohne Koriander"></textarea>
+            </label>
+          </fieldset>
+
+          <button class="btn btn-primary btn-full order-submit" type="submit" data-submit-label>Bestellung abschicken</button>
+          <p class="order-submit-note">Die Bestellung wird per WhatsApp an uns gesendet.</p>
           <div class="notice" id="orderNotice" role="status" aria-live="polite"></div>
         </form>
       </div>
