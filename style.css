@@ -1,3 +1,9 @@
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 700; font-display: swap; src: url("assets/fonts/bricolage-grotesque-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 800; font-display: swap; src: url("assets/fonts/bricolage-grotesque-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Nunito Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/nunito-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Nunito Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("assets/fonts/nunito-sans-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Nunito Sans"; font-style: normal; font-weight: 800 900; font-display: swap; src: url("assets/fonts/nunito-sans-latin-800-normal.woff2") format("woff2"); }
+
 :root {
   --ink: oklch(0.17 0.026 42);
   --muted: oklch(0.39 0.034 66);
@@ -64,62 +70,7 @@ body::after {
   pointer-events: none;
 }
 
-.intro-curtain {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background:
-    linear-gradient(135deg, oklch(0.20 0.040 42), oklch(0.33 0.120 28) 58%, oklch(0.21 0.040 55));
-  color: var(--surface);
-  animation: intro-exit 1500ms var(--ease-luxury) 1250ms forwards;
-  pointer-events: none;
-}
 
-.intro-curtain::before,
-.intro-curtain::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 50%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, oklch(0.86 0.070 82 / 0.90), transparent);
-  transform: scaleX(0);
-  animation: intro-line 1300ms var(--ease-luxury) 220ms forwards;
-}
-
-.intro-curtain::after {
-  inset: 50% 0 auto;
-  animation-delay: 360ms;
-}
-
-.intro-mark {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  animation: intro-mark 1600ms var(--ease-luxury) both;
-}
-
-.intro-mark img {
-  width: 86px;
-  height: 66px;
-  object-fit: contain;
-  filter: drop-shadow(0 18px 24px oklch(0 0 0 / 0.26));
-}
-
-.intro-mark span {
-  font-family: "Bricolage Grotesque", "Nunito Sans", Arial, sans-serif;
-  font-size: clamp(1.65rem, 5vw, 3.35rem);
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.intro-complete .intro-curtain {
-  display: none;
-}
 
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
@@ -1770,6 +1721,26 @@ textarea { resize: vertical; }
   box-shadow: 0 8px 16px oklch(0.28 0.05 45 / 0.10);
 }
 
+.map-consent {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  min-height: 420px;
+  padding: 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 30% 20%, oklch(0.91 0.060 132 / 0.6), transparent 55%),
+    radial-gradient(circle at 80% 80%, oklch(0.95 0.045 28 / 0.8), transparent 50%),
+    var(--porcelain);
+}
+
+.map-consent small {
+  max-width: 28ch;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .map-wrap iframe {
   width: 100%;
   height: 420px;
@@ -1977,11 +1948,11 @@ textarea { resize: vertical; }
 .page-ready .hero-content,
 .page-ready .hero-visual,
 .page-ready .section-head {
-  animation: rise-in 820ms var(--ease-luxury) both;
+  animation: rise-in 560ms var(--ease-luxury) both;
 }
 
 .page-ready .hero-visual {
-  animation-delay: 260ms;
+  animation-delay: 80ms;
 }
 
 .page-ready .hero-visual img {
@@ -1994,18 +1965,18 @@ textarea { resize: vertical; }
 }
 
 .page-ready .site-header {
-  animation: header-drop 820ms var(--ease-luxury) 1450ms both;
+  animation: header-drop 520ms var(--ease-luxury) both;
 }
 
-.page-ready .hero-content .eyebrow { animation: luxury-copy-in 780ms var(--ease-luxury) 1470ms both; }
-.page-ready .hero-content h1 { animation: title-unveil 1120ms var(--ease-luxury) 1550ms both; }
-.page-ready .hero-content > p:not(.eyebrow) { animation: luxury-copy-in 780ms var(--ease-luxury) 1680ms both; }
-.page-ready .hero-actions { animation: luxury-copy-in 780ms var(--ease-luxury) 1800ms both; }
-.page-ready .quick-facts span:nth-child(1) { animation-delay: 1880ms; }
-.page-ready .quick-facts span:nth-child(2) { animation-delay: 1960ms; }
-.page-ready .quick-facts span:nth-child(3) { animation-delay: 2040ms; }
-.page-ready .service-mode:nth-child(1) { animation-delay: 1720ms; }
-.page-ready .service-mode:nth-child(2) { animation-delay: 1780ms; }
+.page-ready .hero-content .eyebrow { animation: luxury-copy-in 520ms var(--ease-luxury) both; }
+.page-ready .hero-content h1 { animation: title-unveil 700ms var(--ease-luxury) 40ms both; }
+.page-ready .hero-content > p:not(.eyebrow) { animation: luxury-copy-in 520ms var(--ease-luxury) 100ms both; }
+.page-ready .hero-actions { animation: luxury-copy-in 520ms var(--ease-luxury) 160ms both; }
+.page-ready .quick-facts span:nth-child(1) { animation-delay: 220ms; }
+.page-ready .quick-facts span:nth-child(2) { animation-delay: 260ms; }
+.page-ready .quick-facts span:nth-child(3) { animation-delay: 300ms; }
+.page-ready .service-mode:nth-child(1) { animation-delay: 120ms; }
+.page-ready .service-mode:nth-child(2) { animation-delay: 160ms; }
 
 @keyframes rise-in {
   from {
