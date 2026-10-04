@@ -41,12 +41,17 @@
     return parseInt(p[0], 10) * 60 + parseInt(p[1] || "0", 10);
   }
 
+  function matches(w, d) {
+    if (w.days && w.days.indexOf(d.getDay()) < 0) return false;
+    var now = d.getHours() * 60 + d.getMinutes();
+    var from = w.from ? minutes(w.from) : 0;
+    var to = w.to ? minutes(w.to) : 24 * 60;
+    return from <= to ? now >= from && now < to : now >= from || now < to;
+  }
+
   function inWindow(item) {
     var d = new Date();
-    var now = d.getHours() * 60 + d.getMinutes();
-    var from = item.from ? minutes(item.from) : 0;
-    var to = item.to ? minutes(item.to) : 24 * 60;
-    return from <= to ? now >= from && now < to : now >= from || now < to;
+    return (item.when || [item]).some(function (w) { return matches(w, d); });
   }
 
   function activeItems() { return playlist.filter(inWindow); }
