@@ -16,14 +16,17 @@ var T7 = [6];
 // Thứ 7: chỉ chế độ buổi tối, 11:00–21:30. Chủ nhật: đóng cửa, tất cả tắt.
 // Riêng ngày 05.10.2026: bật màn hình món từ 08:00 để thử (xóa dòng TEST sau ngày đó).
 var TEST = { date: "2026-10-05", from: "08:00", to: "11:00" };
+// Riêng ngày 04.10.2026 (Chủ nhật): bật cả 4 tivi cả ngày để thử.
+var TEST_HOM_NAY = { date: "2026-10-04", from: "00:00", to: "24:00" };
 
-var TRUA = [{ days: T2_T6, from: "11:00", to: "16:45" }, TEST];
-var TRUA_TV34 = [{ days: T2_T6, from: "11:00", to: "17:00" }, TEST];
+var TRUA = [{ days: T2_T6, from: "11:00", to: "16:45" }, TEST, TEST_HOM_NAY];
+var TRUA_TV34 = [{ days: T2_T6, from: "11:00", to: "17:00" }, TEST, TEST_HOM_NAY];
 var TOI = [
   { days: T2_T6, from: "16:45", to: "21:30" },
-  { days: T7, from: "11:00", to: "21:30" }
+  { days: T7, from: "11:00", to: "21:30" },
+  TEST_HOM_NAY
 ];
-var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }, TEST];
+var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }, TEST, TEST_HOM_NAY];
 
 window.TV_PLAYLISTS = {
   1: [
