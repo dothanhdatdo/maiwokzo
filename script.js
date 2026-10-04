@@ -464,6 +464,7 @@ function renderCart() {
   if (!wrap) return;
   state.cart.forEach(normalizeSauces);
   updatePickupWindow();
+  updateOrderSummary();
   const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
   $$("[data-cart-count]").forEach((node) => { node.textContent = String(count); });
   if (!state.cart.length) {
@@ -710,6 +711,15 @@ function setQuickStatus(text, isError = false) {
   status.classList.toggle("error", isError);
 }
 
+function updateOrderSummary() {
+  const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
+  const text = $("[data-summary-text]");
+  if (text) text.textContent = count ? `${count} ${count === 1 ? "Gericht" : "Gerichte"} · ${euro.format(cartTotal())}` : "Noch keine Gerichte ausgewählt";
+  $("[data-order-summary]")?.classList.toggle("is-empty", !count);
+  const submit = $("[data-submit-label]");
+  if (submit) submit.textContent = count ? `Bestellung abschicken · ${euro.format(cartTotal())}` : "Bestellung abschicken";
+}
+
 function cartTotal() {
   return state.cart.reduce((sum, cartItem) => {
     const item = findItem(cartItem.id);
@@ -733,8 +743,17 @@ function renderOrderTimes() {
 function initForms() {
   renderOrderTimes();
   $("#orderForm")?.addEventListener("submit", handleOrder);
-  $('#orderForm [name="pickupDate"]')?.addEventListener("change", () => {
+  $("[data-pickup-days]")?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-date]");
+    if (!chip) return;
     state.pickupDateTouched = true;
+    $('#orderForm [name="pickupDate"]').value = chip.dataset.date;
+    updatePickupWindow();
+  });
+  $("[data-pickup-times]")?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-time]");
+    if (!chip) return;
+    $('#orderForm [name="pickupTime"]').value = chip.dataset.time;
     updatePickupWindow();
   });
 }
@@ -776,31 +795,75 @@ function pickupWindow(dateISO) {
   return { label, start: slot.start, end: slot.end };
 }
 
-function updatePickupWindow() {
-  const input = $('#orderForm [name="pickupTime"]');
-  const hint = $("#pickupHint");
-  if (!input || !hint) return;
-  const dateInput = $('#orderForm [name="pickupDate"]');
-  let moved = false;
-  if (dateInput && state.cart.length && !state.pickupDateTouched) {
-    const next = nextPickupDate(cartPickupSlots());
-    moved = next !== getBerlinDateISO();
-    dateInput.value = next;
+const WEEKDAY_SHORT = ["", "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+function formatDateShort(iso) {
+  const [, month, day] = iso.split("-");
+  return `${WEEKDAY_SHORT[weekdayOf(iso)]} ${day}.${month}.`;
+}
+
+function formatDateLong(iso) {
+  const [year, month, day] = iso.split("-");
+  return `${WEEKDAY_SHORT[weekdayOf(iso)]}., ${day}.${month}.${year}`;
+}
+
+// Mögliche Abholtage (nächste 7 Tage) und Uhrzeiten im 15-Minuten-Takt.
+function pickupDays(slots) {
+  const today = getBerlinDateISO();
+  const now = getBerlinParts();
+  const days = [];
+  for (let offset = 0; offset < 8 && days.length < 6; offset += 1) {
+    const iso = getBerlinDateISO(new Date(Date.now() + offset * 86400000));
+    const slot = slots.find((entry) => entry.days.includes(weekdayOf(iso)));
+    if (!slot) continue;
+    if (iso === today && now.hour * 60 + now.minute >= toMinutes(slot.end)) continue;
+    days.push({ iso, label: offset === 0 ? "Heute" : offset === 1 ? "Morgen" : formatDateShort(iso), sub: offset < 2 ? formatDateShort(iso) : "" });
   }
-  const pickup = pickupWindow(dateInput?.value);
-  if (!pickup) {
-    input.min = "11:00";
-    input.max = "21:00";
+  return days;
+}
+
+function pickupTimes(slot, iso) {
+  const now = getBerlinParts();
+  const nowMinutes = iso === getBerlinDateISO() ? now.hour * 60 + now.minute : -1;
+  const times = [];
+  for (let minute = toMinutes(slot.start); minute <= toMinutes(slot.end); minute += 15) {
+    if (minute > nowMinutes) times.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
+  }
+  return times;
+}
+
+function updatePickupWindow() {
+  const daysWrap = $("[data-pickup-days]");
+  const timesWrap = $("[data-pickup-times]");
+  const hint = $("#pickupHint");
+  const dateInput = $('#orderForm [name="pickupDate"]');
+  const timeInput = $('#orderForm [name="pickupTime"]');
+  if (!daysWrap || !timesWrap || !dateInput || !timeInput) return;
+  if (!state.cart.length) {
+    daysWrap.innerHTML = "";
+    timesWrap.innerHTML = `<p class="chip-empty">Bitte zuerst Gerichte auswählen, dann zeigen wir passende Abholzeiten.</p>`;
+    dateInput.value = "";
+    timeInput.value = "";
     hint.textContent = "";
     return;
   }
-  if (pickup.closed) {
-    hint.textContent = `${pickup.label} sind an diesem Tag nicht bestellbar.`;
-    return;
-  }
-  input.min = pickup.start;
-  input.max = pickup.end;
-  hint.textContent = `Abholung für ${pickup.label}: ${pickup.start}-${pickup.end} Uhr${moved ? " (heute nicht mehr möglich, Abholdatum auf den nächsten möglichen Tag gesetzt)" : ""}`;
+  const slots = cartPickupSlots();
+  const days = pickupDays(slots);
+  if (!days.some((day) => day.iso === dateInput.value)) dateInput.value = days[0]?.iso || "";
+  daysWrap.innerHTML = days.map((day) => `
+    <button type="button" class="chip${day.iso === dateInput.value ? " is-active" : ""}" role="radio" aria-checked="${day.iso === dateInput.value}" data-date="${day.iso}">
+      <strong>${escapeHtml(day.label)}</strong>${day.sub ? `<small>${escapeHtml(day.sub)}</small>` : ""}
+    </button>`).join("");
+  const pickup = pickupWindow(dateInput.value);
+  const times = pickup && !pickup.closed ? pickupTimes(pickup, dateInput.value) : [];
+  if (!times.includes(timeInput.value)) timeInput.value = "";
+  timesWrap.innerHTML = times.length
+    ? times.map((time) => `<button type="button" class="chip chip-time${time === timeInput.value ? " is-active" : ""}" role="radio" aria-checked="${time === timeInput.value}" data-time="${time}">${time}</button>`).join("")
+    : `<p class="chip-empty">An diesem Tag ist keine Abholung möglich.</p>`;
+  const todayMissing = days[0] && days[0].iso !== getBerlinDateISO() && slots.some((slot) => slot.days.includes(getBerlinParts().weekday));
+  hint.textContent = pickup && !pickup.closed
+    ? `${pickup.label}: Abholung ${pickup.start}-${pickup.end} Uhr${todayMissing ? " · heute keine Abholung mehr möglich" : ""}`
+    : "";
 }
 
 function pickupError(data) {
@@ -837,6 +900,10 @@ function handleOrder(event) {
     openCart();
     return showNotice($("#orderNotice"), `Bitte wählen Sie im Warenkorb für jede Portion von ${item.code} ${displayName(item)} eine Sauce.`, true);
   }
+  if (!data.pickupDate || !data.pickupTime) {
+    $("[data-pickup-times]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+    return showNotice($("#orderNotice"), "Bitte wählen Sie Tag und Uhrzeit für die Abholung.", true);
+  }
   const pickupProblem = pickupError(data);
   if (pickupProblem) return showNotice($("#orderNotice"), pickupProblem, true);
   if (!form.checkValidity()) return showNotice($("#orderNotice"), "Bitte füllen Sie alle Pflichtfelder korrekt aus.", true);
@@ -851,7 +918,7 @@ function handleOrder(event) {
     `E-Mail: ${data.email}`, "",
     "Gerichte:", ...lines, "",
     `Gesamt: ${euro.format(cartTotal())}`,
-    `Abholung: ${data.pickupDate} um ${data.pickupTime} Uhr`,
+    `Abholung: ${formatDateLong(data.pickupDate)} um ${data.pickupTime} Uhr`,
     `Zahlungsmethode: ${data.payment || "Nicht angegeben"}`,
     `Hinweise: ${data.notes || "-"}`
   ].join("\n");
