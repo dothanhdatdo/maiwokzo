@@ -1,6 +1,7 @@
-// Nội dung cho từng tivi. Mở trang: tv/?tv=1 (2, 3, 5)
+// Nội dung cho từng tivi. Mở trang: tv/?tv=1 (2, 3, 4, 5)
 // Nguồn: Canva "zo- übersicht (A4 (Querformat))" — trang 1–3 = tivi 1–3, trang 4 = tivi 5,
 // trang 5–6 là chế độ buổi tối của tivi 1.
+// Tivi 4: Canva "box to go tv" (PDF, xuất ra PNG; tivi treo dọc nên nội dung đã xoay sẵn).
 //
 // type:    "image" hoặc "video"
 // seconds: thời gian hiển thị (ảnh mặc định 15s; video mặc định chạy hết rồi chuyển)
@@ -36,5 +37,6 @@ window.TV_PLAYLISTS = {
   ],
   2: [{ type: "video", src: "media/tv2.mp4", when: CA_NGAY }],
   3: [{ type: "video", src: "media/tv3.mp4", when: TRUA_TV35 }],
+  4: [{ type: "image", src: "media/tv4.png", when: CA_NGAY }],
   5: [{ type: "image", src: "media/tv5.png", when: TRUA_TV35 }]
 };
