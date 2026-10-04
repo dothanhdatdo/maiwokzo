@@ -27,6 +27,8 @@ var TOI = [
   { days: T7, from: "11:00", to: "21:30" },
   TEST_HOM_NAY
 ];
+// Tivi 4 (box to go): thứ 2–6, 10:50–16:45. Thứ 7, Chủ nhật tắt.
+var BOX_TV4 = [{ days: T2_T6, from: "10:50", to: "16:45" }, TEST, TEST_HOM_NAY];
 var CA_NGAY = [{ days: T2_T6.concat(T7), from: "11:00", to: "21:30" }, TEST, TEST_HOM_NAY];
 
 window.TV_PLAYLISTS = {
@@ -37,6 +39,6 @@ window.TV_PLAYLISTS = {
   ],
   2: [{ type: "video", src: "media/tv2.mp4", when: CA_NGAY }],
   3: [{ type: "video", src: "media/tv3.mp4", when: TRUA_TV35 }],
-  4: [{ type: "image", src: "media/tv4.png", when: CA_NGAY }],
+  4: [{ type: "image", src: "media/tv4.png", when: BOX_TV4 }],
   5: [{ type: "image", src: "media/tv5.png", when: TRUA_TV35 }]
 };
