@@ -5,24 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Maiwok Zo Freiburg - Asiatische Küche, Sushi & Abholung</title>
   <meta name="description" content="Maiwok Zo Freiburg: asiatische Küche, Mittagsmenü, Sushi, Abholung, WhatsApp-Bestellung und Tischreservierung.">
-  <link rel="icon" href="assets/images/logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/images/favicon-64.png" sizes="64x64" type="image/png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/images/hero-1000.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="intro-curtain" aria-hidden="true">
-    <div class="intro-mark">
-      <img src="assets/images/logo.png" alt="">
-      <span>Maiwok Zo Freiburg</span>
-    </div>
-  </div>
 
   <header class="site-header">
     <a class="brand" href="#start" aria-label="Maiwok Zo Freiburg Startseite">
-      <img src="assets/images/logo.png" alt="Maiwok Zo Freiburg Logo" width="58" height="45">
+      <img src="assets/images/logo-sm.webp" alt="Maiwok Zo Freiburg Logo" width="58" height="45">
       <span>Maiwok Zo Freiburg</span>
     </a>
     <button class="nav-toggle" type="button" aria-label="Navigation öffnen" aria-expanded="false" data-nav-toggle>
@@ -72,7 +66,7 @@
           </div>
         </div>
         <figure class="hero-visual">
-          <img src="assets/images/dish-08.webp" alt="Maiwok Zo Freiburg Spezialität" fetchpriority="high">
+          <img src="assets/images/hero-1000.webp" alt="Maiwok Zo Freiburg Spezialität" width="1000" height="750" fetchpriority="high" decoding="async">
         </figure>
       </div>
     </section>
@@ -314,7 +308,12 @@
           </div>
         </div>
         <div class="map-wrap">
-          <iframe title="Google Maps: Maiwok Zo Freiburg" src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d1716.4194118458515!2d7.868619444607044!3d47.988088252377864!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47911d4855ef27dd%3A0xe2528e3658d818e5!2sMAI%20WOK%20ZO!5e0!3m2!1sen!2sde!4v1791056865662!5m2!1sen!2sde" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <div class="map-consent" data-map-src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d1716.4194118458515!2d7.868619444607044!3d47.988088252377864!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47911d4855ef27dd%3A0xe2528e3658d818e5!2sMAI%20WOK%20ZO!5e0!3m2!1sen!2sde!4v1791056865662!5m2!1sen!2sde">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="#EA4335" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6" fill="#fff"/></svg>
+            <strong>Schwarzwaldstraße 78b, 79117 Freiburg</strong>
+            <button class="btn btn-primary" type="button" data-load-map>Karte anzeigen</button>
+            <small>Beim Laden der Karte werden Daten an Google übertragen.</small>
+          </div>
         </div>
       </div>
     </section>
@@ -349,18 +348,10 @@
 
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button type="button" aria-label="Galerie schließen" data-lightbox-close>×</button>
-    <img src="assets/images/logo.png" alt="Maiwok Zo Freiburg Galerieansicht">
+    <img src="" alt="Maiwok Zo Freiburg Galerieansicht" hidden>
   </div>
 
   <script src="menu-data.js"></script>
   <script src="script.js"></script>
-  <script>
-    (function (d, s) {
-      var js, rjs = d.getElementsByTagName(s)[0];
-      js = d.createElement(s);
-      js.src = "https://static.resmio.com/static/de/widget.js#id=maiwok-zo&width=100%25&height=560px";
-      rjs.parentNode.insertBefore(js, rjs);
-    }(document, "script"));
-  </script>
 </body>
 </html>

@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initQuickOrder();
   initForms();
   initGallery();
+  initLazyEmbeds();
   initHeroTilt();
   setDefaultDates();
   initMotion();
@@ -309,7 +310,7 @@ function menuCard(item, options = {}) {
   const buttonText = options.buttonText || "In den Warenkorb";
   return `
     <article class="menu-card">
-      ${item.image && item.image !== logoImage ? `<img class="menu-card-image" src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" loading="lazy">` : ""}
+      ${item.image && item.image !== logoImage ? `<img class="menu-card-image" src="${escapeHtml(thumbOf(item.image))}" alt="${escapeHtml(item.name)}" width="640" height="480" loading="lazy" decoding="async">` : ""}
       <div class="menu-card-body">
         <div class="menu-card-top">
           <span class="code">${escapeHtml(item.code || item.id)}</span>
@@ -401,6 +402,11 @@ function sauceSummary(cartItem) {
 }
 
 // Gericht mit Größe (Box to go B1-B5: Klein/Groß/Mega) anzeigen, z. B. "Bratnudeln mit Gemüse und Ei (Klein)".
+// Kleine Vorschaubilder (640 px) für Karten und Galerie; das große Bild nur in der Galerie-Ansicht.
+function thumbOf(src) {
+  return src.replace("assets/images/dish-", "assets/images/thumbs/dish-");
+}
+
 function displayName(item) {
   return item.size ? `${item.name} (${item.size})` : item.name;
 }
@@ -947,7 +953,7 @@ function initGallery() {
   if (!gallery) return;
   gallery.innerHTML = imagePool.slice(0, 16).map((src, index) => `
     <button class="gallery-item" type="button" data-gallery="${src}">
-      <img src="${src}" alt="Maiwok Zo Freiburg Gericht ${index + 1}" loading="lazy">
+      <img src="${thumbOf(src)}" alt="Maiwok Zo Freiburg Gericht ${index + 1}" loading="lazy" decoding="async">
     </button>
   `).join("");
   const lightbox = $("#lightbox");
@@ -955,11 +961,46 @@ function initGallery() {
   $$("[data-gallery]").forEach((button) => {
     button.addEventListener("click", () => {
       lightboxImg.src = button.dataset.gallery;
+      lightboxImg.hidden = false;
       lightbox.classList.add("open");
     });
   });
   $("[data-lightbox-close]")?.addEventListener("click", () => lightbox.classList.remove("open"));
   observeMotionElements(gallery);
+}
+
+// Externe Inhalte erst bei Bedarf laden: Resmio, wenn "Reservieren" in die Nähe kommt; Google Maps erst nach Klick.
+function initLazyEmbeds() {
+  const resmio = $("#resmio-maiwok-zo");
+  const loadResmio = () => {
+    if (!resmio || resmio.dataset.loaded) return;
+    resmio.dataset.loaded = "true";
+    const script = document.createElement("script");
+    script.src = "https://static.resmio.com/static/de/widget.js#id=maiwok-zo&width=100%25&height=560px";
+    script.async = true;
+    document.body.appendChild(script);
+  };
+  if (resmio && "IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        loadResmio();
+      }
+    }, { rootMargin: "800px 0px" });
+    observer.observe(resmio);
+  } else {
+    loadResmio();
+  }
+  $("[data-load-map]")?.addEventListener("click", () => {
+    const holder = $(".map-consent");
+    const frame = document.createElement("iframe");
+    frame.title = "Google Maps: Maiwok Zo Freiburg";
+    frame.src = holder.dataset.mapSrc;
+    frame.loading = "lazy";
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.allowFullscreen = true;
+    holder.replaceWith(frame);
+  });
 }
 
 function initMotion() {
