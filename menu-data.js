@@ -101,7 +101,7 @@ const lunchClassicMenu = [
     ["B3", "Bratreis mit Gemüse und Ei", [5.0, 6.0, 7.9], "5, 7, C", ["vegetarisch"]],
     ["B4", "Bratreis mit Hühnerfleisch und Ei", [5.5, 6.5, 8.9], "5, 7, C", ["beliebt"]],
     ["B5", "Bratnudeln mit knusprigem Hähnchenstück", [5.5, 6.5, 8.9], "5, A1, C, K", ["beliebt"]]
-  ].flatMap(([code, name, prices, allergens, tags]) => ["Klein", "Groß", "Mega"].map((size, index) => L(`${code}-${size[0]}`, code, "Box to go", name, size, prices[index], allergens, tags))),
+  ].flatMap(([code, name, prices, allergens, tags]) => ["Klein", "Groß", "Mega"].map((size, index) => ({ ...L(`${code}-${size[0]}`, code, "Box to go", name, size, prices[index], allergens, tags), size }))),
   L("B6", "B6", "Box to go", "Bratnudeln mit knuspriger Ente", "Groß", 14.5, "5, 7, C", ["beliebt"]),
   L("B7", "B7", "Box to go", "Bratnudeln mit geröstetem Chicken", "Groß", 13.5, "5, 7, C", ["beliebt"]),
   L("B8", "B8", "Box to go", "Bratnudeln mit Minifrühlingsrolle", "Groß", 6.5, "5, 7, C, A1", ["vegetarisch", "beliebt"]),
