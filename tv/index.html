@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mai Wok TV</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #stage { position: fixed; inset: 0; }
+  #stage img, #stage video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; background: #000;
+  }
+  #empty { color: #888; font: 4vh/1.4 sans-serif; display: grid; place-items: center; height: 100%; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+(function () {
+  var RELOAD_MS = 10 * 60 * 1000; // tải lại để nhận nội dung mới
+  var IMAGE_SECONDS = 15;
+  var tv = new URLSearchParams(location.search).get("tv") || "1";
+  var stage = document.getElementById("stage");
+  var started = Date.now();
+  var playlist = [];
+  var active = [];
+  var index = -1;
+  var timer = null;
+
+  // playlist.js luôn tải bản mới nhất, không dùng cache
+  var s = document.createElement("script");
+  s.src = "playlist.js?v=" + Date.now();
+  s.onload = start;
+  s.onerror = function () { setTimeout(function () { location.reload(); }, 30000); };
+  document.head.appendChild(s);
+
+  function minutes(hhmm) {
+    var p = String(hhmm).split(":");
+    return parseInt(p[0], 10) * 60 + parseInt(p[1] || "0", 10);
+  }
+
+  function matches(w, d) {
+    if (w.days && w.days.indexOf(d.getDay()) < 0) return false;
+    var now = d.getHours() * 60 + d.getMinutes();
+    var from = w.from ? minutes(w.from) : 0;
+    var to = w.to ? minutes(w.to) : 24 * 60;
+    return from <= to ? now >= from && now < to : now >= from || now < to;
+  }
+
+  function inWindow(item) {
+    var d = new Date();
+    return (item.when || [item]).some(function (w) { return matches(w, d); });
+  }
+
+  function activeItems() { return playlist.filter(inWindow); }
+
+  function key(list) { return list.map(function (i) { return i.src; }).join("|"); }
+
+  function bust(src) {
+    return src + (src.indexOf("?") < 0 ? "?" : "&") + "v=" + Math.floor(started / RELOAD_MS);
+  }
+
+  function start() {
+    playlist = (window.TV_PLAYLISTS || {})[tv] || [];
+    active = activeItems();
+    next();
+    // Mỗi phút: đổi khung giờ thì chuyển ngay; quá hạn thì tải lại khi đang hiển thị 1 mục
+    setInterval(function () {
+      var now = activeItems();
+      if (key(now) !== key(active)) { active = now; index = -1; next(); return; }
+      if (active.length <= 1 && Date.now() - started > RELOAD_MS) location.reload();
+    }, 60000);
+  }
+
+  function next() {
+    clearTimeout(timer);
+    if (Date.now() - started > RELOAD_MS && active.length > 1) { location.reload(); return; }
+    if (!active.length) {
+      stage.innerHTML = '<div id="empty">' + (playlist.length ? "" : "Chưa có nội dung cho tivi " + tv) + "</div>";
+      return;
+    }
+    index = (index + 1) % active.length;
+    show(active[index], active.length === 1);
+  }
+
+  function show(item, single) {
+    var el;
+    if (item.type === "video") {
+      el = document.createElement("video");
+      el.muted = true;
+      el.autoplay = true;
+      el.playsInline = true;
+      el.loop = single && !item.seconds;
+      if (item.seconds) timer = setTimeout(next, item.seconds * 1000);
+      else if (!single) el.onended = next;
+    } else {
+      el = document.createElement("img");
+      el.alt = "";
+      if (!single) timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
+    }
+    el.onerror = function () { clearTimeout(timer); timer = setTimeout(next, 5000); };
+    el.src = bust(item.src);
+    stage.innerHTML = "";
+    stage.appendChild(el);
+    if (el.play) { var p = el.play(); if (p && p.catch) p.catch(function () {}); }
+  }
+})();
+</script>
+</body>
+</html>
