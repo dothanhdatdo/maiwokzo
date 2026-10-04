@@ -43,6 +43,10 @@
 
   function matches(w, d) {
     if (w.days && w.days.indexOf(d.getDay()) < 0) return false;
+    if (w.date) {
+      var ymd = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+      if (ymd !== w.date) return false;
+    }
     var now = d.getHours() * 60 + d.getMinutes();
     var from = w.from ? minutes(w.from) : 0;
     var to = w.to ? minutes(w.to) : 24 * 60;
