@@ -9,6 +9,10 @@
 //          hoặc date "YYYY-MM-DD" (một ngày cụ thể),
 //          from/to "HH:MM" theo giờ của máy phát. Ngoài mọi khung giờ: màn hình đen.
 // Một mục duy nhất thì hiển thị/lặp mãi.
+//
+// TV_VERSION: đổi giá trị này mỗi khi thay ảnh/video trong media/ để tivi tải bản mới
+// (nếu không đổi, tivi giữ bản đã lưu và không tải lại 11–19 MB mỗi 10 phút).
+window.TV_VERSION = "2026-10-05";
 
 var T2_T6 = [1, 2, 3, 4, 5];
 var T7 = [6];

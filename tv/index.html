@@ -6,45 +6,104 @@
 <meta name="robots" content="noindex">
 <title>Mai Wok TV</title>
 <style>
+  /* Chỉ dùng CSS cũ (không inset/grid) để chạy được trên tivi Samsung và máy phát đời cũ */
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
-  #stage { position: fixed; inset: 0; }
+  #stage { position: fixed; top: 0; right: 0; bottom: 0; left: 0; }
   #stage img, #stage video {
-    position: absolute; inset: 0; width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     object-fit: contain; background: #000;
   }
-  #empty { color: #888; font: 4vh/1.4 sans-serif; display: grid; place-items: center; height: 100%; }
+  #empty {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: -webkit-box; display: -webkit-flex; display: flex;
+    -webkit-box-align: center; -webkit-align-items: center; align-items: center;
+    -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center;
+    color: #888; font: 4vh/1.4 sans-serif; text-align: center;
+  }
+  #debug {
+    position: fixed; left: 0; bottom: 0; max-width: 100%; z-index: 9;
+    padding: 1vh 1.5vh; background: rgba(0, 0, 0, .7); color: #fff;
+    font: 2.2vh/1.35 monospace; white-space: pre-wrap; word-break: break-all;
+  }
 </style>
 </head>
 <body>
-<div id="stage"></div>
+<div id="stage"><div id="empty">Mai Wok TV · đang tải…</div></div>
 <script>
 (function () {
   var RELOAD_MS = 10 * 60 * 1000; // tải lại để nhận nội dung mới
   var IMAGE_SECONDS = 15;
-  var tv = new URLSearchParams(location.search).get("tv") || "1";
   var stage = document.getElementById("stage");
   var started = Date.now();
   var playlist = [];
   var active = [];
   var index = -1;
   var timer = null;
+  var current = null;
+  var lastError = "";
+
+  function param(name) {
+    var m = new RegExp("[?&]" + name + "=([^&#]*)", "i").exec(location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")).replace(/^\s+|\s+$/g, "") : "";
+  }
+
+  var tv = param("tv") || "1";
+  var debug = param("debug") === "1";
+
+  function message(text) {
+    stage.innerHTML = '<div id="empty"></div>';
+    stage.firstChild.textContent = text;
+  }
+
+  window.onerror = function (msg, src, line) {
+    lastError = msg + (line ? " (dòng " + line + ")" : "");
+    if (!playlist.length) message("Lỗi: " + lastError);
+  };
+
+  // Chỉ tải lại trang khi chắc chắn mạng và web đang chạy; nếu không, tivi sẽ kẹt ở trang lỗi (màn hình trắng)
+  var reloading = false;
+  function safeReload() {
+    if (reloading) return;
+    reloading = true;
+    var x = new XMLHttpRequest();
+    x.open("GET", "playlist.js?ping=" + Date.now(), true);
+    x.timeout = 15000;
+    x.onload = function () {
+      if (x.status === 200) { location.reload(); return; }
+      retry("HTTP " + x.status);
+    };
+    x.onerror = function () { retry("mất mạng"); };
+    x.ontimeout = function () { retry("hết thời gian chờ"); };
+    x.send();
+    function retry(why) {
+      lastError = "Không tải lại được: " + why;
+      reloading = false;
+      setTimeout(safeReload, 60000);
+    }
+  }
 
   // playlist.js luôn tải bản mới nhất, không dùng cache
   var s = document.createElement("script");
   s.src = "playlist.js?v=" + Date.now();
   s.onload = start;
-  s.onerror = function () { setTimeout(function () { location.reload(); }, 30000); };
-  document.head.appendChild(s);
+  s.onerror = function () {
+    lastError = "Không tải được playlist.js";
+    message("Mai Wok TV · không tải được nội dung, đang thử lại…");
+    setTimeout(safeReload, 30000);
+  };
+  document.getElementsByTagName("head")[0].appendChild(s);
 
   function minutes(hhmm) {
     var p = String(hhmm).split(":");
     return parseInt(p[0], 10) * 60 + parseInt(p[1] || "0", 10);
   }
 
+  function two(n) { return ("0" + n).slice(-2); }
+
   function matches(w, d) {
     if (w.days && w.days.indexOf(d.getDay()) < 0) return false;
     if (w.date) {
-      var ymd = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+      var ymd = d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate());
       if (ymd !== w.date) return false;
     }
     var now = d.getHours() * 60 + d.getMinutes();
@@ -55,36 +114,45 @@
 
   function inWindow(item) {
     var d = new Date();
-    return (item.when || [item]).some(function (w) { return matches(w, d); });
+    var list = item.when || [item];
+    for (var i = 0; i < list.length; i++) if (matches(list[i], d)) return true;
+    return false;
   }
 
-  function activeItems() { return playlist.filter(inWindow); }
+  function activeItems() {
+    var out = [];
+    for (var i = 0; i < playlist.length; i++) if (inWindow(playlist[i])) out.push(playlist[i]);
+    return out;
+  }
 
-  function key(list) { return list.map(function (i) { return i.src; }).join("|"); }
+  function key(list) {
+    var k = [];
+    for (var i = 0; i < list.length; i++) k.push(list[i].src);
+    return k.join("|");
+  }
 
+  // Phiên bản cố định từ playlist.js: tivi chỉ tải lại ảnh/video khi nội dung thật sự đổi
   function bust(src) {
-    return src + (src.indexOf("?") < 0 ? "?" : "&") + "v=" + Math.floor(started / RELOAD_MS);
+    return src + (src.indexOf("?") < 0 ? "?" : "&") + "v=" + encodeURIComponent(window.TV_VERSION || "1");
   }
 
   function start() {
     playlist = (window.TV_PLAYLISTS || {})[tv] || [];
+    if (!playlist.length) { message("Chưa có nội dung cho tivi " + tv); return; }
     active = activeItems();
     next();
     // Mỗi phút: đổi khung giờ thì chuyển ngay; quá hạn thì tải lại khi đang hiển thị 1 mục
     setInterval(function () {
       var now = activeItems();
       if (key(now) !== key(active)) { active = now; index = -1; next(); return; }
-      if (active.length <= 1 && Date.now() - started > RELOAD_MS) location.reload();
+      if (active.length <= 1 && Date.now() - started > RELOAD_MS) safeReload();
     }, 60000);
   }
 
   function next() {
     clearTimeout(timer);
-    if (Date.now() - started > RELOAD_MS && active.length > 1) { location.reload(); return; }
-    if (!active.length) {
-      stage.innerHTML = '<div id="empty">' + (playlist.length ? "" : "Chưa có nội dung cho tivi " + tv) + "</div>";
-      return;
-    }
+    if (Date.now() - started > RELOAD_MS && active.length > 1) { safeReload(); }
+    if (!active.length) { current = null; stage.innerHTML = ""; return; }
     index = (index + 1) % active.length;
     show(active[index], active.length === 1);
   }
@@ -95,7 +163,8 @@
       el = document.createElement("video");
       el.muted = true;
       el.autoplay = true;
-      el.playsInline = true;
+      el.setAttribute("muted", "");
+      el.setAttribute("playsinline", "");
       el.loop = single && !item.seconds;
       if (item.seconds) timer = setTimeout(next, item.seconds * 1000);
       else if (!single) el.onended = next;
@@ -104,11 +173,41 @@
       el.alt = "";
       if (!single) timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
     }
-    el.onerror = function () { clearTimeout(timer); timer = setTimeout(next, 5000); };
+    el.onerror = function () {
+      lastError = "Không tải được " + item.src;
+      clearTimeout(timer);
+      timer = setTimeout(next, 5000);
+    };
     el.src = bust(item.src);
+    current = el;
     stage.innerHTML = "";
     stage.appendChild(el);
     if (el.play) { var p = el.play(); if (p && p.catch) p.catch(function () {}); }
+  }
+
+  // ?debug=1: hiện thông tin chẩn đoán ở góc dưới màn hình
+  if (debug) {
+    var box = document.createElement("div");
+    box.id = "debug";
+    document.body.appendChild(box);
+    setInterval(function () {
+      var d = new Date();
+      var lines = [
+        "tivi: " + tv + "   giờ máy: " + d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) +
+          " " + two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds()) +
+          "   lệch UTC: " + (-d.getTimezoneOffset() / 60) + "h",
+        "phiên bản: " + (window.TV_VERSION || "?") + "   mục trong lịch: " + playlist.length +
+          "   đang bật: " + active.length,
+        "đang chiếu: " + (current ? current.getAttribute("src") : "(màn hình đen – ngoài giờ)")
+      ];
+      if (current && current.tagName === "VIDEO") {
+        lines.push("video: readyState " + current.readyState + ", networkState " + current.networkState +
+          (current.error ? ", lỗi " + current.error.code : "") + ", " + Math.round(current.currentTime) + "s");
+      }
+      if (lastError) lines.push("lỗi gần nhất: " + lastError);
+      lines.push(navigator.userAgent);
+      box.textContent = lines.join("\n");
+    }, 1000);
   }
 })();
 </script>
