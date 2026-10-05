@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mai Wok TV test</title>
+<!-- Trang thử cho Yodeck: không cần playlist, chỉ để biết tivi tải được trang tới đâu.
+     XANH LÁ = tải được HTML nhưng JavaScript không chạy.
+     XANH DƯƠNG = HTML + JavaScript chạy; dòng chữ cho biết ảnh có tải được không.
+     TRẮNG = tivi không tải được trang này (mạng, link, chứng chỉ https hoặc Yodeck). -->
+<style>
+  html, body { margin: 0; height: 100%; background: #0a8f3c; color: #fff; overflow: hidden; }
+  body { font: 5vh/1.4 sans-serif; text-align: center; }
+  #box { position: absolute; top: 8%; left: 5%; width: 90%; }
+  #big { font-size: 12vh; font-weight: bold; }
+  #info { font: 2.6vh/1.4 monospace; word-break: break-all; }
+  #img { height: 22vh; margin-top: 2vh; border: 0.5vh solid #fff; }
+</style>
+</head>
+<body>
+<div id="box">
+  <div id="big">HTML OK</div>
+  <div id="step">JavaScript KHÔNG chạy</div>
+  <div id="info"></div>
+</div>
+<script>
+(function () {
+  var d = new Date();
+  function two(n) { return ("0" + n).slice(-2); }
+  document.body.style.background = "#1652d9";
+  document.getElementById("big").innerHTML = "JS OK";
+  document.getElementById("step").innerHTML = "Đang thử tải ảnh tv5.png…";
+  document.getElementById("info").innerHTML =
+    "Giờ máy: " + d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " +
+    two(d.getHours()) + ":" + two(d.getMinutes()) + " (UTC" + (d.getTimezoneOffset() <= 0 ? "+" : "-") +
+    Math.abs(d.getTimezoneOffset() / 60) + ")<br>" +
+    "Màn hình: " + window.innerWidth + "×" + window.innerHeight + "<br>" +
+    navigator.userAgent.replace(/</g, "&lt;");
+  var img = new Image();
+  img.id = "img";
+  img.onload = function () {
+    document.getElementById("step").innerHTML = "Ảnh tải được (" + img.naturalWidth + "px) – web chạy tốt trên tivi này";
+    document.getElementById("box").appendChild(img);
+  };
+  img.onerror = function () {
+    document.body.style.background = "#c0392b";
+    document.getElementById("step").innerHTML = "KHÔNG tải được ảnh media/tv5.png";
+  };
+  img.src = "media/tv5.png?test=" + d.getTime();
+})();
+</script>
+</body>
+</html>
