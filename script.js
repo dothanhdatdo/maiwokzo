@@ -33,8 +33,12 @@ const LUNCH_PICKUP_TEXT = hoursText(LUNCH_PICKUP);
 const DINNER_PICKUP_TEXT = hoursText(DINNER_PICKUP);
 
 const EMAIL_ENDPOINT = "";
-// Bestellnummern: zufällig aus diesem Bereich (ohne Server nicht fortlaufend, siehe orderNumberFor).
+// Bestellnummern: Mit ORDER_ENDPOINT (Google Apps Script, siehe server/google-apps-script/ANLEITUNG.md)
+// fortlaufend pro Tag ab 100 und jede Bestellung landet in der Google-Tabelle.
+// Ohne ORDER_ENDPOINT: zufällig aus ORDER_NUMBER. Ist der Server nicht erreichbar: Ersatznummer aus ORDER_NUMBER_FALLBACK.
+const ORDER_ENDPOINT = "";
 const ORDER_NUMBER = { min: 100, max: 120 };
+const ORDER_NUMBER_FALLBACK = { min: 900, max: 999 };
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const MENU_PAGE_SIZE = 8;
 const state = {
@@ -869,24 +873,59 @@ function updateOrderSummary() {
 }
 
 // Bestellnummer: bleibt gleich, solange sich der Warenkorb nicht ändert (z. B. bei erneutem Absenden).
-// Ohne Server kennt die Website die Nummern anderer Kunden nicht; deshalb stehen Name und Abholzeit mit in der Kopfzeile.
-function orderNumberFor(signature) {
+function cachedOrderNumber(signature) {
   try {
     const saved = JSON.parse(sessionStorage.getItem("maiWokOrderNumber") || "null");
     if (saved && saved.signature === signature) return saved.number;
   } catch {}
-  let last = 0;
-  try { last = Number(localStorage.getItem("maiWokLastOrderNumber")) || 0; } catch {}
-  const size = ORDER_NUMBER.max - ORDER_NUMBER.min + 1;
-  let number;
-  do {
-    number = ORDER_NUMBER.min + Math.floor(Math.random() * size);
-  } while (size > 1 && number === last);
+  return null;
+}
+
+function rememberOrderNumber(signature, number) {
   try {
     sessionStorage.setItem("maiWokOrderNumber", JSON.stringify({ signature, number }));
     localStorage.setItem("maiWokLastOrderNumber", String(number));
   } catch {}
+}
+
+// Zufallsnummer ohne Server; nie zweimal hintereinander dieselbe auf einem Gerät.
+function randomOrderNumber(range) {
+  let last = 0;
+  try { last = Number(localStorage.getItem("maiWokLastOrderNumber")) || 0; } catch {}
+  const size = range.max - range.min + 1;
+  let number;
+  do {
+    number = range.min + Math.floor(Math.random() * size);
+  } while (size > 1 && number === last);
   return number;
+}
+
+function orderNumberFor(signature) {
+  const cached = cachedOrderNumber(signature);
+  if (cached) return cached;
+  const number = randomOrderNumber(ORDER_NUMBER);
+  rememberOrderNumber(signature, number);
+  return number;
+}
+
+// Fortlaufende Tagesnummer vom Server holen (schreibt die Bestellung zugleich in die Google-Tabelle).
+async function requestOrderNumber(payload) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(ORDER_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    const result = await response.json();
+    return result && result.ok && Number(result.number) ? Number(result.number) : null;
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 function cartTotal() {
@@ -1080,7 +1119,38 @@ function handleOrder(event) {
     const item = findItem(cartItem.id);
     return `${cartItem.qty}x ${shortCode(item)} ${displayName(item)}${cartItem.sauces ? ` - ${sauceSummary(cartItem)}` : ""} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
   });
-  const orderNumber = orderNumberFor(JSON.stringify(state.cart));
+  const signature = JSON.stringify(state.cart);
+  const cached = cachedOrderNumber(signature);
+  if (cached || !ORDER_ENDPOINT) {
+    finishOrder(data, lines, orderNumberFor(signature), null);
+    return;
+  }
+  // Fenster sofort öffnen (sonst blockiert der Browser WhatsApp nach dem Warten auf den Server).
+  const popup = window.open("", "_blank");
+  if (popup) popup.opener = null;
+  const submit = $("[data-submit-label]");
+  if (submit) submit.disabled = true;
+  showNotice($("#orderNotice"), "Bestellnummer wird vergeben …");
+  requestOrderNumber({
+    name: data.name,
+    phone: data.phone,
+    email: data.email,
+    pickup: `${formatDateShort(data.pickupDate)} ${data.pickupTime}`,
+    items: lines.join("\n"),
+    total: euro.format(cartTotal()),
+    payment: data.payment || "",
+    notes: data.notes || "",
+    source: ORDER_SOURCE ? ORDER_SOURCES[ORDER_SOURCE] : "Website"
+  }).then((number) => {
+    const orderNumber = number || randomOrderNumber(ORDER_NUMBER_FALLBACK);
+    rememberOrderNumber(signature, orderNumber);
+    finishOrder(data, lines, orderNumber, popup);
+  }).finally(() => {
+    if (submit) submit.disabled = false;
+  });
+}
+
+function finishOrder(data, lines, orderNumber, popup) {
   const message = [
     `*Bestellung Nr. ${orderNumber}* · ${data.name} · Abholung ${formatDateShort(data.pickupDate)} ${data.pickupTime} Uhr`,
     "Bestellanfrage Maiwok Zo Freiburg", "",
@@ -1095,11 +1165,11 @@ function handleOrder(event) {
     ...(ORDER_SOURCE ? ["", `Quelle: ${ORDER_SOURCES[ORDER_SOURCE]}`] : [])
   ].join("\n");
   trackEvent(ORDER_SOURCE ? `bestellung-${ORDER_SOURCE}` : "bestellung", ORDER_SOURCE ? "Bestellung gesendet (QR Mitnahme-Karte)" : "Bestellung gesendet");
-  const links = sendMessage(`Bestellung Nr. ${orderNumber} – Maiwok Zo Freiburg`, message);
+  const links = sendMessage(`Bestellung Nr. ${orderNumber} – Maiwok Zo Freiburg`, message, popup);
   showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Bitte senden Sie die Nachricht ab. Falls Sie auch per E-Mail senden möchten:", links, orderNumber);
 }
 
-function sendMessage(subject, message) {
+function sendMessage(subject, message, popup = null) {
   const links = {
     whatsapp: `https://wa.me/${RESTAURANT.whatsapp}?text=${encodeURIComponent(message)}`,
     email: `mailto:${RESTAURANT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
@@ -1111,7 +1181,8 @@ function sendMessage(subject, message) {
       body: JSON.stringify({ subject, message, to: RESTAURANT.email })
     }).catch(() => {});
   }
-  window.open(links.whatsapp, "_blank", "noopener");
+  if (popup && !popup.closed) popup.location.href = links.whatsapp;
+  else window.open(links.whatsapp, "_blank", "noopener");
   return links;
 }
 
