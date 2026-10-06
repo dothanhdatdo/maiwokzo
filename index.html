@@ -117,6 +117,10 @@
           <div class="quick-actions" id="quickActions" hidden>
             <button class="btn btn-primary" type="button" id="quickAddAll">Alle in den Warenkorb</button>
           </div>
+          <div class="quick-cart" data-quick-cart hidden>
+            <span><span aria-hidden="true">🛒</span> Im Warenkorb: <strong data-quick-cart-text></strong></span>
+            <a class="btn btn-primary" href="#bestellen" data-goto-checkout>Zur Kasse</a>
+          </div>
         </div>
       </div>
     </section>
@@ -336,6 +340,13 @@
   </footer>
 
   <button class="floating-cart" type="button" data-open-cart aria-label="Warenkorb öffnen">Warenkorb <span data-cart-count>0</span></button>
+  <div class="checkout-bar" data-checkout-bar hidden>
+    <button class="checkout-bar-cart" type="button" data-open-cart aria-label="Warenkorb öffnen">
+      <span class="checkout-bar-count" data-cart-count>0</span>
+      <span class="checkout-bar-text"><small>Warenkorb</small><strong data-checkout-total>0,00 €</strong></span>
+    </button>
+    <a class="checkout-bar-go" href="#bestellen" data-goto-checkout>Zur Kasse <span aria-hidden="true">→</span></a>
+  </div>
   <nav class="mobile-dock" aria-label="Schnellaktionen">
     <a href="#menu">Speisekarte</a>
     <button type="button" data-open-cart>Warenkorb <span data-cart-count>0</span></button>
@@ -351,7 +362,7 @@
     <div class="cart-footer">
       <button class="text-button" type="button" data-clear-cart>Warenkorb leeren</button>
       <div class="cart-total"><span>Gesamt</span><strong id="cartTotal">0,00 €</strong></div>
-      <a class="btn btn-primary btn-full" href="#orderForm" data-close-cart-link>Anfrage abschließen</a>
+      <a class="btn btn-primary btn-full" href="#bestellen" data-goto-checkout>Zur Kasse</a>
     </div>
   </aside>
 
