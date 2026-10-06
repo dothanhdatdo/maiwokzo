@@ -33,6 +33,8 @@ const LUNCH_PICKUP_TEXT = hoursText(LUNCH_PICKUP);
 const DINNER_PICKUP_TEXT = hoursText(DINNER_PICKUP);
 
 const EMAIL_ENDPOINT = "";
+// Bestellnummern: zufällig aus diesem Bereich (ohne Server nicht fortlaufend, siehe orderNumberFor).
+const ORDER_NUMBER = { min: 100, max: 120 };
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const MENU_PAGE_SIZE = 8;
 const state = {
@@ -550,6 +552,17 @@ function initCart() {
   $$("[data-open-cart]").forEach((button) => button.addEventListener("click", openCart));
   $$("[data-close-cart], [data-close-cart-link]").forEach((button) => button.addEventListener("click", closeCart));
   $("[data-cart-backdrop]")?.addEventListener("click", closeCart);
+  $$("[data-goto-checkout]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    goToCheckout();
+  }));
+  const form = $("#orderForm");
+  if (form && "IntersectionObserver" in window) {
+    new IntersectionObserver(([entry]) => {
+      state.checkoutInView = entry.isIntersecting;
+      updateCheckoutBar();
+    }, { threshold: 0.15 }).observe(form);
+  }
   $("[data-clear-cart]")?.addEventListener("click", () => {
     state.cart = [];
     persistCart();
@@ -819,6 +832,27 @@ function setQuickStatus(text, isError = false) {
   status.classList.toggle("error", isError);
 }
 
+// "Zur Kasse": Warenkorb schließen, zum Bestellformular springen und das erste leere Pflichtfeld fokussieren.
+function goToCheckout() {
+  closeCart();
+  const section = $("#orderForm") || $("#bestellen");
+  section?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  const firstEmpty = $$("#orderForm input[required]").find((input) => !input.value.trim());
+  window.setTimeout(() => firstEmpty?.focus({ preventScroll: true }), 450);
+}
+
+// Mitlaufende Leiste mit Anzahl, Summe und "Zur Kasse", sobald etwas im Warenkorb liegt (ausgeblendet am Formular).
+function updateCheckoutBar() {
+  const bar = $("[data-checkout-bar]");
+  if (!bar) return;
+  const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
+  const visible = count > 0 && !state.checkoutInView;
+  bar.hidden = !visible;
+  document.body.classList.toggle("checkout-visible", visible);
+  const total = $("[data-checkout-total]");
+  if (total) total.textContent = euro.format(cartTotal());
+}
+
 function updateOrderSummary() {
   const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
   const text = $("[data-summary-text]");
@@ -826,6 +860,33 @@ function updateOrderSummary() {
   $("[data-order-summary]")?.classList.toggle("is-empty", !count);
   const submit = $("[data-submit-label]");
   if (submit) submit.textContent = count ? `Bestellung abschicken · ${euro.format(cartTotal())}` : "Bestellung abschicken";
+  const quickCart = $("[data-quick-cart]");
+  if (quickCart) {
+    quickCart.hidden = !count;
+    $("[data-quick-cart-text]").textContent = `${count} ${count === 1 ? "Gericht" : "Gerichte"} · ${euro.format(cartTotal())}`;
+  }
+  updateCheckoutBar();
+}
+
+// Bestellnummer: bleibt gleich, solange sich der Warenkorb nicht ändert (z. B. bei erneutem Absenden).
+// Ohne Server kennt die Website die Nummern anderer Kunden nicht; deshalb stehen Name und Abholzeit mit in der Kopfzeile.
+function orderNumberFor(signature) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem("maiWokOrderNumber") || "null");
+    if (saved && saved.signature === signature) return saved.number;
+  } catch {}
+  let last = 0;
+  try { last = Number(localStorage.getItem("maiWokLastOrderNumber")) || 0; } catch {}
+  const size = ORDER_NUMBER.max - ORDER_NUMBER.min + 1;
+  let number;
+  do {
+    number = ORDER_NUMBER.min + Math.floor(Math.random() * size);
+  } while (size > 1 && number === last);
+  try {
+    sessionStorage.setItem("maiWokOrderNumber", JSON.stringify({ signature, number }));
+    localStorage.setItem("maiWokLastOrderNumber", String(number));
+  } catch {}
+  return number;
 }
 
 function cartTotal() {
@@ -1019,7 +1080,9 @@ function handleOrder(event) {
     const item = findItem(cartItem.id);
     return `${cartItem.qty}x ${shortCode(item)} ${displayName(item)}${cartItem.sauces ? ` - ${sauceSummary(cartItem)}` : ""} - ${euro.format(item.price * cartItem.qty)}${cartItem.note ? ` | Hinweis: ${cartItem.note}` : ""}`;
   });
+  const orderNumber = orderNumberFor(JSON.stringify(state.cart));
   const message = [
+    `*Bestellung Nr. ${orderNumber}* · ${data.name} · Abholung ${formatDateShort(data.pickupDate)} ${data.pickupTime} Uhr`,
     "Bestellanfrage Maiwok Zo Freiburg", "",
     `Name: ${data.name}`,
     `Telefon: ${data.phone}`,
@@ -1032,8 +1095,8 @@ function handleOrder(event) {
     ...(ORDER_SOURCE ? ["", `Quelle: ${ORDER_SOURCES[ORDER_SOURCE]}`] : [])
   ].join("\n");
   trackEvent(ORDER_SOURCE ? `bestellung-${ORDER_SOURCE}` : "bestellung", ORDER_SOURCE ? "Bestellung gesendet (QR Mitnahme-Karte)" : "Bestellung gesendet");
-  const links = sendMessage("Bestellung Maiwok Zo Freiburg", message);
-  showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Falls Sie auch per E-Mail senden möchten:", links);
+  const links = sendMessage(`Bestellung Nr. ${orderNumber} – Maiwok Zo Freiburg`, message);
+  showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Bitte senden Sie die Nachricht ab. Falls Sie auch per E-Mail senden möchten:", links, orderNumber);
 }
 
 function sendMessage(subject, message) {
@@ -1297,10 +1360,11 @@ function showNotice(node, text, isError = false) {
   node.classList.add("show");
 }
 
-function showActionNotice(node, text, links) {
+function showActionNotice(node, text, links, orderNumber) {
   if (!node) return;
   node.classList.remove("error");
   node.innerHTML = `
+    ${orderNumber ? `<span class="order-number"><small>Ihre Bestellnummer</small><strong>${escapeHtml(orderNumber)}</strong><small>Bitte bei der Abholung nennen.</small></span>` : ""}
     <span>${escapeHtml(text)}</span>
     <span class="notice-actions">
       <a href="${escapeHtml(links.whatsapp)}" target="_blank" rel="noopener noreferrer">WhatsApp öffnen</a>
