@@ -47,6 +47,26 @@ const state = {
   quickMode: ""
 };
 
+// Herkunft merken: QR-Code auf der Mitnahme-Karte öffnet die Seite mit ?ref=tuete
+const ORDER_SOURCES = { tuete: "QR-Code Mitnahme-Karte" };
+const ORDER_SOURCE = (() => {
+  let ref = "";
+  try { ref = (new URLSearchParams(location.search).get("ref") || "").toLowerCase(); } catch (e) {}
+  try {
+    if (ORDER_SOURCES[ref]) sessionStorage.setItem("maiWokSource", ref);
+    else ref = sessionStorage.getItem("maiWokSource") || "";
+  } catch (e) {}
+  return ORDER_SOURCES[ref] ? ref : "";
+})();
+
+function trackEvent(path, title) {
+  try {
+    if (window.goatcounter && typeof window.goatcounter.count === "function") {
+      window.goatcounter.count({ path, title, event: true });
+    }
+  } catch (e) {}
+}
+
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
 let motionObserver;
@@ -1008,8 +1028,10 @@ function handleOrder(event) {
     `Gesamt: ${euro.format(cartTotal())}`,
     `Abholung: ${formatDateLong(data.pickupDate)} um ${data.pickupTime} Uhr`,
     `Zahlungsmethode: ${data.payment || "Nicht angegeben"}`,
-    `Hinweise: ${data.notes || "-"}`
+    `Hinweise: ${data.notes || "-"}`,
+    ...(ORDER_SOURCE ? ["", `Quelle: ${ORDER_SOURCES[ORDER_SOURCE]}`] : [])
   ].join("\n");
+  trackEvent(ORDER_SOURCE ? `bestellung-${ORDER_SOURCE}` : "bestellung", ORDER_SOURCE ? "Bestellung gesendet (QR Mitnahme-Karte)" : "Bestellung gesendet");
   const links = sendMessage("Bestellung Maiwok Zo Freiburg", message);
   showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Falls Sie auch per E-Mail senden möchten:", links);
 }
