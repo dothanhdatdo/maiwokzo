@@ -1,8 +1,8 @@
 # Số đơn hàng chạy theo ngày + bảng đơn hàng (Google Sheet)
 
 Sau khi cài xong:
-- Mỗi đơn đặt trên web nhận **số chạy tăng dần trong ngày**: 100, 101, 102…
-- **Sang ngày mới tự bắt đầu lại từ 100** (theo giờ Đức), không cần reset.
+- Mỗi đơn đặt trên web nhận **số chạy tăng dần trong ngày**: 500, 501, 502…
+- **Sang ngày mới tự bắt đầu lại từ 500** (theo giờ Đức), không cần reset.
 - Mỗi đơn tự ghi thành **một dòng trong Google Sheet**, đơn mới nhất ở trên cùng.
 
 Thời gian cài: khoảng 5–10 phút. Dùng **tài khoản Google của quán**.
@@ -42,7 +42,7 @@ https://docs.google.com/spreadsheets/d/1xo-fpdMCVju7R04-eSPvpmxjCVEyjXjgf1vmH9K4
 Dán link vừa copy vào trình duyệt. Nếu thấy dòng giống như:
 
 ```
-{"ok":true,"date":"2026-10-06","next":100}
+{"ok":true,"date":"2026-10-06","next":500}
 ```
 
 là máy chủ đã chạy.
@@ -57,7 +57,7 @@ Gửi link `…/exec` đó trong chat. Claude sẽ điền vào dòng `ORDER_END
 
 **Đơn hàng nằm ở đâu?** Trong tab **Bestellungen** của bảng: ngày, giờ nhận, số đơn, tên, điện thoại, e-mail, giờ lấy, món, tổng tiền, thanh toán, ghi chú. Mở bằng app Google Sheets trên điện thoại là xem được.
 
-**Muốn bắt đầu từ số khác (ví dụ 1)?** Trong Apps Script sửa dòng `const START_NUMBER = 100;`, lưu, rồi làm mục "Sửa code về sau" bên dưới.
+**Muốn bắt đầu từ số khác (ví dụ 1)?** Trong Apps Script sửa dòng `const START_NUMBER = 500;`, lưu, rồi làm mục "Sửa code về sau" bên dưới.
 
 **Sửa code về sau** (link vẫn giữ nguyên): **Bereitstellen → Bereitstellungen verwalten** → bút chì **Bearbeiten** → **Version: Neue Version** → **Bereitstellen**.
 
