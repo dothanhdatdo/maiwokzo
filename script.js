@@ -36,7 +36,7 @@ const EMAIL_ENDPOINT = "";
 // Bestellnummern: Mit ORDER_ENDPOINT (Google Apps Script, siehe server/google-apps-script/ANLEITUNG.md)
 // fortlaufend pro Tag ab 500 und jede Bestellung landet in der Google-Tabelle.
 // Ohne ORDER_ENDPOINT: zufällig aus ORDER_NUMBER. Ist der Server nicht erreichbar: Ersatznummer aus ORDER_NUMBER_FALLBACK.
-const ORDER_ENDPOINT = "";
+const ORDER_ENDPOINT = "https://script.google.com/macros/s/AKfycbwYCFTJaHvqj8q0xhtfPArD2ox8uwBcxkIf7EV5KBL_heGGb6SUKyyFimaChNUnuzAk/exec";
 const ORDER_NUMBER = { min: 500, max: 520 };
 const ORDER_NUMBER_FALLBACK = { min: 900, max: 999 };
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
