@@ -66,6 +66,13 @@ function doGet() {
 function getSheet_() {
   const book = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = book.getSheetByName(SHEET_NAME);
+  // Vorbereitete Tabelle: erstes Blatt hat schon die Kopfzeile ("Datum" in A1) -> übernehmen und umbenennen.
+  const first = book.getSheets()[0];
+  if (!sheet && first && first.getRange(1, 1).getValue() === "Datum") {
+    sheet = first.setName(SHEET_NAME);
+    sheet.getRange(1, 1, 1, HEADER.length).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+  }
   if (!sheet) {
     sheet = book.insertSheet(SHEET_NAME);
     sheet.getRange(1, 1, 1, HEADER.length).setValues([HEADER]).setFontWeight("bold");
