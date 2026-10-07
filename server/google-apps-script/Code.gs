@@ -1,7 +1,7 @@
 /**
  * Maiwok Zo Freiburg – Bestellnummern & Bestellliste (Google Apps Script)
  *
- * - Vergibt fortlaufende Bestellnummern pro Tag (deutsche Zeit): 100, 101, 102, …
+ * - Vergibt fortlaufende Bestellnummern pro Tag (deutsche Zeit): 500, 501, 502, …
  *   Am nächsten Tag beginnt die Zählung automatisch wieder bei START_NUMBER.
  * - Schreibt jede Bestellung als neue Zeile (neueste oben) in das Tabellenblatt "Bestellungen".
  *
@@ -9,7 +9,7 @@
  */
 
 const TIMEZONE = "Europe/Berlin";
-const START_NUMBER = 100;
+const START_NUMBER = 500;
 const SHEET_NAME = "Bestellungen";
 const HEADER = [
   "Datum", "Eingang", "Nr.", "Name", "Telefon", "E-Mail",
