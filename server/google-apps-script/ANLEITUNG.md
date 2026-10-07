@@ -9,17 +9,20 @@ Thời gian cài: khoảng 5–10 phút. Dùng **tài khoản Google của quán
 
 ---
 
-## Bước 1 – Tạo bảng Google Sheet
+## Bước 1 – Mở bảng (đã tạo sẵn)
 
-1. Mở https://sheets.new (đăng nhập bằng tài khoản Google của quán).
-2. Đặt tên bảng, ví dụ: **Maiwok Bestellungen**.
+Bảng **Maiwok Bestellungen** đã được tạo sẵn trong Google Drive của dothanhdatdo@gmail.com:
+https://docs.google.com/spreadsheets/d/1xo-fpdMCVju7R04-eSPvpmxjCVEyjXjgf1vmH9K4o9A/edit
+
+(Nếu muốn tự tạo bảng mới: mở https://sheets.new, đặt tên tuỳ ý. Code tự tạo tab "Bestellungen".)
 
 ## Bước 2 – Dán code
 
 1. Trong bảng, chọn menu **Erweiterungen → Apps Script** (tiếng Anh: Extensions → Apps Script).
 2. Xoá hết nội dung có sẵn trong file `Code.gs`.
-3. Mở file [`Code.gs`](Code.gs) trong thư mục này trên GitHub, copy **toàn bộ** và dán vào.
-4. Bấm biểu tượng **Speichern** (đĩa mềm) để lưu.
+3. Mở link sau, bấm **Strg+A** (chọn hết) rồi **Strg+C** (copy):
+   https://raw.githubusercontent.com/dothanhdatdo/maiwokzo/master/server/google-apps-script/Code.gs
+4. Quay lại Apps Script, dán bằng **Strg+V**, bấm biểu tượng **Speichern** (đĩa mềm).
 
 ## Bước 3 – Đưa lên mạng (Bereitstellen)
 
