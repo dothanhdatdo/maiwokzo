@@ -1,7 +1,7 @@
 const RESTAURANT = {
   name: "Maiwok Zo Freiburg",
-  phoneDisplay: "0761 89730160",
-  phone: "+4976189730160",
+  phoneDisplay: "0761 89731087",
+  phone: "+4976189731087",
   whatsapp: "4976189730160",
   email: "maiwokzo@gmail.com",
   timezone: "Europe/Berlin"
