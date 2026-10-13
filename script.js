@@ -64,6 +64,23 @@ const ORDER_SOURCE = (() => {
   return ORDER_SOURCES[ref] ? ref : "";
 })();
 
+// Google-Sheet-Statistik (Apps-Script-Web-App): zählt Scans der Mitnahme-Karte und Bestellungen daraus.
+const STATS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxHxFLCrT6vdacopRg96cVDPnbDz8kGXkzX6HiayHi34_X-Y1Bwz-eTa_Eeo01vCfsw/exec";
+function logStat(type) {
+  if (!STATS_ENDPOINT) return;
+  try {
+    fetch(`${STATS_ENDPOINT}?t=${encodeURIComponent(type)}&_=${Date.now()}`, { mode: "no-cors", keepalive: true }).catch(() => {});
+  } catch (e) {}
+}
+(() => {
+  if (ORDER_SOURCE !== "tuete") return;
+  try {
+    if (sessionStorage.getItem("maiWokScanLogged")) return;
+    sessionStorage.setItem("maiWokScanLogged", "1");
+  } catch (e) {}
+  logStat("scan");
+})();
+
 function trackEvent(path, title) {
   try {
     if (window.goatcounter && typeof window.goatcounter.count === "function") {
@@ -1164,6 +1181,7 @@ function finishOrder(data, lines, orderNumber, popup) {
     ...(ORDER_SOURCE ? ["", `Quelle: ${ORDER_SOURCES[ORDER_SOURCE]}`] : [])
   ].join("\n");
   trackEvent(ORDER_SOURCE ? `bestellung-${ORDER_SOURCE}` : "bestellung", ORDER_SOURCE ? "Bestellung gesendet (QR Mitnahme-Karte)" : "Bestellung gesendet");
+  if (ORDER_SOURCE === "tuete") logStat("order");
   const links = sendMessage(message, popup);
   showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Bitte tippen Sie dort auf „Senden“ – erst dann erhalten wir Ihre Bestellung.", links, orderNumber);
 }
