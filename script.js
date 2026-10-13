@@ -65,7 +65,7 @@ const ORDER_SOURCE = (() => {
 })();
 
 // Google-Sheet-Statistik (Apps-Script-Web-App): zählt Scans der Mitnahme-Karte und Bestellungen daraus.
-const STATS_ENDPOINT = "";
+const STATS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxHxFLCrT6vdacopRg96cVDPnbDz8kGXkzX6HiayHi34_X-Y1Bwz-eTa_Eeo01vCfsw/exec";
 function logStat(type) {
   if (!STATS_ENDPOINT) return;
   try {
