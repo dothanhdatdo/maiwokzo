@@ -32,7 +32,6 @@ const DINNER_HOURS_TEXT = hoursText(DINNER_HOURS);
 const LUNCH_PICKUP_TEXT = hoursText(LUNCH_PICKUP);
 const DINNER_PICKUP_TEXT = hoursText(DINNER_PICKUP);
 
-const EMAIL_ENDPOINT = "";
 // Bestellnummern: Mit ORDER_ENDPOINT (Google Apps Script, siehe server/google-apps-script/ANLEITUNG.md)
 // fortlaufend pro Tag ab 500 und jede Bestellung landet in der Google-Tabelle.
 // Ohne ORDER_ENDPOINT: zufällig aus ORDER_NUMBER. Ist der Server nicht erreichbar: Ersatznummer aus ORDER_NUMBER_FALLBACK.
@@ -1156,7 +1155,7 @@ function finishOrder(data, lines, orderNumber, popup) {
     "Bestellanfrage Maiwok Zo Freiburg", "",
     `Name: ${data.name}`,
     `Telefon: ${data.phone}`,
-    `E-Mail: ${data.email}`, "",
+    ...(data.email ? [`E-Mail: ${data.email}`] : []), "",
     "Gerichte:", ...lines, "",
     `Gesamt: ${euro.format(cartTotal())}`,
     `Abholung: ${formatDateLong(data.pickupDate)} um ${data.pickupTime} Uhr`,
@@ -1165,22 +1164,13 @@ function finishOrder(data, lines, orderNumber, popup) {
     ...(ORDER_SOURCE ? ["", `Quelle: ${ORDER_SOURCES[ORDER_SOURCE]}`] : [])
   ].join("\n");
   trackEvent(ORDER_SOURCE ? `bestellung-${ORDER_SOURCE}` : "bestellung", ORDER_SOURCE ? "Bestellung gesendet (QR Mitnahme-Karte)" : "Bestellung gesendet");
-  const links = sendMessage(`Bestellung Nr. ${orderNumber} – Maiwok Zo Freiburg`, message, popup);
-  showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Bitte senden Sie die Nachricht ab. Falls Sie auch per E-Mail senden möchten:", links, orderNumber);
+  const links = sendMessage(message, popup);
+  showActionNotice($("#orderNotice"), "WhatsApp wurde geöffnet. Bitte tippen Sie dort auf „Senden“ – erst dann erhalten wir Ihre Bestellung.", links, orderNumber);
 }
 
-function sendMessage(subject, message, popup = null) {
-  const links = {
-    whatsapp: `https://wa.me/${RESTAURANT.whatsapp}?text=${encodeURIComponent(message)}`,
-    email: `mailto:${RESTAURANT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
-  };
-  if (EMAIL_ENDPOINT) {
-    fetch(EMAIL_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject, message, to: RESTAURANT.email })
-    }).catch(() => {});
-  }
+// Bestellung nur per WhatsApp an das Restaurant senden.
+function sendMessage(message, popup = null) {
+  const links = { whatsapp: `https://wa.me/${RESTAURANT.whatsapp}?text=${encodeURIComponent(message)}` };
   if (popup && !popup.closed) popup.location.href = links.whatsapp;
   else window.open(links.whatsapp, "_blank", "noopener");
   return links;
@@ -1438,8 +1428,7 @@ function showActionNotice(node, text, links, orderNumber) {
     ${orderNumber ? `<span class="order-number"><small>Ihre Bestellnummer</small><strong>${escapeHtml(orderNumber)}</strong><small>Bitte bei der Abholung nennen.</small></span>` : ""}
     <span>${escapeHtml(text)}</span>
     <span class="notice-actions">
-      <a href="${escapeHtml(links.whatsapp)}" target="_blank" rel="noopener noreferrer">WhatsApp öffnen</a>
-      <a href="${escapeHtml(links.email)}">E-Mail öffnen</a>
+      <a href="${escapeHtml(links.whatsapp)}" target="_blank" rel="noopener noreferrer">WhatsApp erneut öffnen</a>
     </span>
   `;
   node.classList.add("show");
