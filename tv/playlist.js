@@ -12,7 +12,7 @@
 //
 // TV_VERSION: đổi giá trị này mỗi khi thay ảnh/video trong media/ để tivi tải bản mới
 // (nếu không đổi, tivi giữ bản đã lưu và không tải lại 11–19 MB mỗi 10 phút).
-window.TV_VERSION = "2026-10-05";
+window.TV_VERSION = "2026-10-31";
 
 var T2_T6 = [1, 2, 3, 4, 5];
 var T7 = [6];
@@ -44,5 +44,7 @@ window.TV_PLAYLISTS = {
   2: [{ type: "video", src: "media/tv2.mp4", when: CA_NGAY }],
   3: [{ type: "video", src: "media/tv3.mp4", when: TRUA_TV35 }],
   4: [{ type: "image", src: "media/tv4.png", when: BOX_TV4 }],
-  5: [{ type: "image", src: "media/tv5.png", when: TRUA_TV35 }]
+  // Tivi 5: SUSHI-PAUSE – tạm chiếu bảng thông báo thay cho menu Sushi.
+  // Khi bán Sushi lại: đổi src về "media/tv5.png" và đổi TV_VERSION.
+  5: [{ type: "image", src: "media/tv5-sushi-pause.jpg", when: TRUA_TV35 }]
 };

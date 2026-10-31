@@ -265,3 +265,15 @@ const GOURMET_SAUCES = ["Thai-Basilikum-Sojasauce", "Erdnusssauce", "Rotes Thai-
 dinnerMenu.forEach((item) => {
   if (item.category === "Gourmet" || item.id === "EX7") item.sauces = GOURMET_SAUCES;
 });
+
+// SUSHI-PAUSE: true = Sushi & Sashimi sowie Gerichte mit Sushi/rohem Fisch vorübergehend ausblenden
+// (Speisekarte, Schnellsuche, Warenkorb). Zum Wiederaufnehmen auf false setzen.
+const SUSHI_PAUSED = true;
+const SUSHI_PAUSE_IDS = ["20", "190", "191"]; // Bowl mit rohem Lachs, Menüs mit Nigiri/Sushi
+const isSushiItem = (item) => /^(Sushi|Sashimi)/.test(item.category) || SUSHI_PAUSE_IDS.includes(item.id);
+const pausedSushiItems = SUSHI_PAUSED ? dinnerMenu.filter(isSushiItem) : [];
+if (SUSHI_PAUSED) {
+  for (let i = dinnerMenu.length - 1; i >= 0; i -= 1) {
+    if (isSushiItem(dinnerMenu[i])) dinnerMenu.splice(i, 1);
+  }
+}

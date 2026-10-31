@@ -702,6 +702,38 @@ h2 {
   cursor: not-allowed;
 }
 
+/* Hinweisleiste (z. B. Sushi-Pause) */
+.announcement {
+  background: var(--lacquer);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.announcement[hidden],
+.sushi-pause-note[hidden] { display: none; }
+
+.announcement-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  text-align: center;
+}
+
+.announcement p { margin: 0; line-height: 1.4; }
+
+.sushi-pause-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius);
+  background: oklch(0.95 0.045 28 / 0.6);
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+
 .section-pad { padding: 82px 0; }
 
 .sr-only {
