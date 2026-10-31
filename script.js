@@ -95,6 +95,7 @@ const $$ = (selector, scope = document) => Array.from(scope.querySelectorAll(sel
 let motionObserver;
 
 document.addEventListener("DOMContentLoaded", () => {
+  $$("[data-sushi-pause]").forEach((node) => { node.hidden = !SUSHI_PAUSED; });
   initPageIntro();
   initNavigation();
   initMenus();
@@ -691,6 +692,14 @@ function removeCartItem(key) {
 }
 
 // Schnellsuche: Name oder Nummern ("2 7 34") eingeben und direkt in den Warenkorb legen.
+// Sushi-Pause: freundlicher Hinweis, wenn nach Sushi gesucht wird (Wörter oder Nummern pausierter Gerichte).
+const SUSHI_PAUSE_MESSAGE = "Sushi pausieren wir derzeit, da wir uns ganz auf unsere Wok-Küche und vietnamesische Spezialitäten konzentrieren. Wir bitten um Ihr Verständnis.";
+function isSushiQuery(query, missingCodes = []) {
+  if (!SUSHI_PAUSED) return false;
+  if (/sushi|sashimi|nigiri|maki|tataki|inside[- ]?out|california/i.test(query)) return true;
+  return missingCodes.some((code) => pausedSushiItems.some((item) => item.code.toLowerCase() === String(code).toLowerCase()));
+}
+
 function initQuickOrder() {
   const input = $("#quickSearch");
   if (!input) return;
@@ -760,10 +769,12 @@ function renderQuickResults() {
   const missing = rows.filter((row) => row.missing).map((row) => row.missing);
   const query = $("#quickSearch").value.trim();
   if (query && !found.length) {
-    wrap.innerHTML = emptyMenu(missing.length ? `Keine Gerichte mit Nummer ${missing.join(", ")} gefunden.` : "Kein passendes Gericht gefunden.");
+    wrap.innerHTML = emptyMenu(isSushiQuery(query, missing)
+      ? SUSHI_PAUSE_MESSAGE
+      : missing.length ? `Keine Gerichte mit Nummer ${missing.join(", ")} gefunden.` : "Kein passendes Gericht gefunden.");
   } else {
     wrap.innerHTML = rows.map((row, index) => {
-      if (row.missing) return `<div class="quick-row quick-row-missing">Nr. ${escapeHtml(row.missing)} nicht gefunden</div>`;
+      if (row.missing) return `<div class="quick-row quick-row-missing">Nr. ${escapeHtml(row.missing)} ${isSushiQuery("", [row.missing]) ? "– Sushi pausiert derzeit" : "nicht gefunden"}</div>`;
       const item = findItem(row.id);
       const open = isItemOrderableNow(item.id);
       const disabled = open && !row.added ? "" : "disabled";
