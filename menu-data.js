@@ -1,6 +1,7 @@
 /*
   MENÜ SCHNELL BEARBEITEN
   Die Angaben entsprechen den drei PDF-Karten vom 26.09.2026.
+  Mittagskarte (Box-Mega-Preise, Pad Thai Nr. 70, Box BX) an die Kasse vom 01.11.2026 angepasst.
 */
 const imagePool = Array.from({ length: 24 }, (_, i) => `assets/images/dish-${String(i + 1).padStart(2, "0")}.webp`);
 const logoImage = "assets/images/logo.png";
@@ -58,7 +59,7 @@ const lunchSupplementMenu = [
   L("L69", "69", "BBQ", "BBQ Sauce mit Rindfleisch", "Frisches Gemüse und Reis", 13.9, "5, 7, B, E, F"),
   L("L71", "71", "Reisnudeln & Spezial", "Bun Nem", "Vietnamesische Frühlingsrollen mit Garnelen, Schweinefleisch, Rindfleisch, Reisnudeln und Gemüse", 10.0, "5, 7, E, F", ["beliebt"]),
   L("L72", "72", "Reisnudeln & Spezial", "Bun Bo Nam Bo", "Rindfleisch mit Reisnudeln, Zwiebeln, Sojasprossen und Zitronengras", 10.0, "5, 7, E, F", ["beliebt"]),
-  L("L75", "75", "Reisnudeln & Spezial", "Pad Thai", "Gebratene Reisbandnudeln mit Garnelen, Pak Choi und Pad Thai Art Sauce", 14.9, "5, 7, B, E, F", ["scharf"]),
+  L("L75", "70", "Reisnudeln & Spezial", "Pad Thai", "Gebratene Reisbandnudeln mit Garnelen, Pak Choi und Pad Thai Art Sauce", 14.9, "5, 7, B, E, F", ["scharf"]),
   L("L78", "78", "Reisnudeln & Spezial", "Gebratene Udon-Nudeln", "Mit paniertem Hühnerfleisch, Pak Choi und Teriyaki-Sauce", 13.9, "5, 7, E, F"),
   L("L79", "79", "Reisnudeln & Spezial", "Tom Yum Thai Art", "Udon-Nudelsuppe mit Riesengarnelen, Pak Choi, Karotten und Paprika", 14.9, "5, 7, B", ["scharf"]),
   L("L80", "80", "Vegetarisch", "Chop Suey Sauce mit frischem Gemüse", "Mit Reis", 11.9, "5, 7, F, K", ["vegetarisch", "vegan"]),
@@ -96,11 +97,11 @@ const lunchSupplementMenu = [
 
 const lunchClassicMenu = [
   ...[
-    ["B1", "Bratnudeln mit Gemüse und Ei", [5.0, 6.0, 7.9], "5, 7, C", ["vegetarisch"]],
-    ["B2", "Bratnudeln mit Hühnerfleisch und Ei", [5.5, 6.5, 8.9], "5, 7, C", ["beliebt"]],
-    ["B3", "Bratreis mit Gemüse und Ei", [5.0, 6.0, 7.9], "5, 7, C", ["vegetarisch"]],
-    ["B4", "Bratreis mit Hühnerfleisch und Ei", [5.5, 6.5, 8.9], "5, 7, C", ["beliebt"]],
-    ["B5", "Bratnudeln mit knusprigem Hähnchenstück", [5.5, 6.5, 8.9], "5, A1, C, K", ["beliebt"]]
+    ["B1", "Bratnudeln mit Gemüse und Ei", [5.0, 6.0, 8.9], "5, 7, C", ["vegetarisch"]],
+    ["B2", "Bratnudeln mit Hühnerfleisch und Ei", [5.5, 6.5, 9.9], "5, 7, C", ["beliebt"]],
+    ["B3", "Bratreis mit Gemüse und Ei", [5.0, 6.0, 8.9], "5, 7, C", ["vegetarisch"]],
+    ["B4", "Bratreis mit Hühnerfleisch und Ei", [5.5, 6.5, 9.9], "5, 7, C", ["beliebt"]],
+    ["B5", "Bratnudeln mit knusprigem Hähnchenstück", [5.5, 6.5, 9.9], "5, A1, C, K", ["beliebt"]]
   ].flatMap(([code, name, prices, allergens, tags]) => ["Klein", "Groß", "Mega"].map((size, index) => ({ ...L(`${code}-${size[0]}`, code, "Box to go", name, size, prices[index], allergens, tags), size }))),
   L("B6", "B6", "Box to go", "Bratnudeln mit knuspriger Ente", "Groß", 14.5, "5, 7, C", ["beliebt"]),
   L("B7", "B7", "Box to go", "Bratnudeln mit geröstetem Chicken", "Groß", 13.5, "5, 7, C", ["beliebt"]),
@@ -116,7 +117,8 @@ const lunchClassicMenu = [
   L("B17", "B17", "Box to go", "Mango mit Hühnerfleisch, Gemüse und Reis", "Einheitsgröße", 7.9, "5, 7, G"),
   L("B20", "B20", "Box to go", "Minifrühlingsrollen", "10 Stück, vegetarisch", 4.5, "5, 7, A1", ["vegetarisch", "vegan"]),
   L("B21", "B21", "Box to go", "Sommerrolle mit Mango", "Mit Hoisin-Sauce", 7.5, "5, 7, D, F", ["vegetarisch"]),
-  L("B22", "B22", "Box to go", "Sommerrolle mit Garnelen", "Mit Hoisin-Sauce", 8.5, "5, 7, B, D")
+  L("B22", "B22", "Box to go", "Sommerrolle mit Garnelen", "Mit Hoisin-Sauce", 8.5, "5, 7, B, D"),
+  L("BX", "BX", "Box to go", "Bratnudeln mit knuspriger Ente", "Angebot", 9.9, "5, 7, C", ["beliebt"])
 ];
 
 const lunchMenu = [...lunchClassicMenu, ...lunchSupplementMenu];
