@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mai Wok Menu Trưa</title>
+<meta name="description" content="Học thuộc số món menu trưa Mai Wok ZO: thẻ ghi nhớ, trắc nghiệm, bấm số như trên Kasse, ghép thẻ.">
+<meta name="theme-color" content="#B3261E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: phone-first single column. Sticky header (brand, deck chips, mode tabs) above one focused practice panel.
+   Red = Box to go, black = Mittag, same as the printed Kasse sheet. */
+:root{
+  --bg:#F3F2EF; --surface:#FFFFFF; --sunk:#E8E6E2; --ink:#1C1A19; --muted:#6A645F; --line:#DCD8D2;
+  --wok:#B3261E; --wok-ink:#FFFFFF; --wok-soft:#F7E2DF;
+  --ok:#2F7A4D; --ok-ink:#FFFFFF; --ok-soft:#E1F0E6;
+  --warn:#9A6700; --warn-soft:#F8EDD3;
+  --shadow:rgba(28,26,25,.22);
+  --font-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-num:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#141211; --surface:#1F1C1B; --sunk:#2B2725; --ink:#F1EDE9; --muted:#A39B94; --line:#38322F;
+    --wok:#E5574D; --wok-ink:#1B0907; --wok-soft:#3B1E1B;
+    --ok:#5BC388; --ok-ink:#0C1D13; --ok-soft:#163124;
+    --warn:#E0A63A; --warn-soft:#382B12;
+    --shadow:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-ui);-webkit-tap-highlight-color:transparent;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--wok);outline-offset:2px}
+
+/* Header */
+header.top{position:sticky;top:0;z-index:10;background:var(--bg);padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid var(--line)}
+.brand-row{display:flex;align-items:center;gap:10px;padding-block:12px 8px}
+.mark{font:700 15px/1 var(--font-num);letter-spacing:.06em;background:var(--wok);color:var(--wok-ink);padding:6px 8px 5px;border-radius:6px;display:inline-flex;gap:4px;align-items:baseline;flex:none}
+.mark small{font-size:11px;opacity:.85}
+h1{font:700 20px/1.1 var(--font-ui);margin:0;letter-spacing:-.01em;flex:1;min-width:0}
+.prog{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.prog b{color:var(--ink)}
+.pbar{height:3px;background:var(--sunk);border-radius:2px;overflow:hidden}
+.pbar span{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-block:10px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:600;font-size:14px;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.chip span{font:600 14px/1 var(--font-num);color:var(--muted)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.on span{color:inherit;opacity:.7}
+.chip.box.on{background:var(--wok);border-color:var(--wok);color:var(--wok-ink)}
+.modes{display:grid;grid-template-columns:repeat(6,1fr)}
+.mode{border:0;background:none;padding:8px 2px 9px;font-weight:600;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.mode.on{color:var(--ink);border-bottom-color:var(--wok)}
+
+main#panel{padding-block:16px 8px;display:flex;flex-direction:column;gap:14px}
+.bar-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count{font-weight:600;color:var(--ink)}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+/* Shared bits */
+.grp{display:inline-block;font:700 11px/1 var(--font-ui);letter-spacing:.09em;text-transform:uppercase;padding:5px 8px;border-radius:5px;background:var(--ink);color:var(--bg)}
+.grp.box{background:var(--wok);color:var(--wok-ink)}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
+.tag.chay{color:var(--ok);background:var(--ok-soft)}
+.tag.cay{color:var(--wok);background:var(--wok-soft)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:44px}
+.btn.big{min-height:54px;font-size:16px}
+.btn.primary{background:var(--wok);border-color:var(--wok);color:var(--wok-ink)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}
+.btn.no{border-color:var(--wok);color:var(--wok)}
+.btn:active{transform:translateY(1px)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.row2.one{grid-template-columns:1fr}
+.opts-row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.seg{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.seg-l{font-size:13px;color:var(--muted);margin-right:4px}
+.seg-b{border:1px solid var(--line);background:var(--surface);padding:6px 10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.seg-b.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tog{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.tog input{accent-color:var(--wok);width:18px;height:18px;margin:0}
+.meter{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--ok);transition:width .35s}
+.meter.warm span{background:var(--wok);transition:width .2s linear}
+.okt{color:var(--ok)}
+.badt{color:var(--wok)}
+
+/* Flashcards */
+.card{perspective:1400px;cursor:pointer;touch-action:pan-y;user-select:none;-webkit-user-select:none;border-radius:20px;transition:transform .15s}
+.card-inner{position:relative;height:340px;transition:transform .5s cubic-bezier(.2,.75,.25,1);transform-style:preserve-3d}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1.5px solid var(--line);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;box-shadow:0 16px 34px -24px var(--shadow);overflow:auto;transition:border-color .15s}
+.face.back{transform:rotateY(180deg)}
+.card[data-lean="yes"] .face{border-color:var(--ok)}
+.card[data-lean="no"] .face{border-color:var(--wok)}
+.f-code{font:700 clamp(100px,32vw,148px)/.88 var(--font-num);letter-spacing:-.01em}
+.f-name{font-weight:700;font-size:28px;line-height:1.2;text-wrap:balance}
+.f-sub{color:var(--muted);font-size:15px}
+.f-label{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.f-de{font-weight:600;font-size:22px;line-height:1.35;max-width:26ch;text-wrap:balance}
+.f-known{position:absolute;top:14px;right:16px;font-size:12px;font-weight:600;color:var(--ok)}
+.b-head{display:flex;align-items:center;gap:10px}
+.b-code{font:700 44px/1 var(--font-num)}
+.ask-code .b-code{font-size:76px;color:var(--wok)}
+.b-name{font-weight:700;font-size:24px;line-height:1.2}
+.b-vi{font-size:15px}
+.b-de{font-size:14px;color:var(--muted);max-width:34ch}
+.b-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.price{font:700 26px/1 var(--font-num);font-variant-numeric:tabular-nums}
+
+/* Learn */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-height:170px;justify-content:center}
+.q-label{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.q-code{font:700 100px/.88 var(--font-num)}
+.q-name{font-weight:700;font-size:26px;line-height:1.2;text-wrap:balance}
+.q-inl{font:700 30px var(--font-num);color:var(--wok);margin-right:6px}
+.q-sub{color:var(--muted)}
+.q-de{font-weight:600;font-size:21px;line-height:1.35;max-width:28ch;text-wrap:balance}
+.opts{display:grid;gap:10px}
+.opts.grid2{grid-template-columns:1fr 1fr}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;cursor:pointer;min-height:60px;color:var(--ink)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.o-key{flex:none;width:24px;height:24px;border-radius:6px;background:var(--sunk);color:var(--muted);font:700 13px/24px var(--font-ui);text-align:center}
+.o-body{display:flex;flex-direction:column;min-width:0}
+.o-main{font-weight:700;font-size:17px;line-height:1.25}
+.o-sub{font-size:13px;color:var(--muted)}
+.o-num{font:700 32px/1 var(--font-num);font-variant-numeric:tabular-nums}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--wok);background:var(--wok-soft)}
+.fb{min-height:44px;font-size:15px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:center;text-align:center}
+
+/* Kasse */
+.k-q{min-height:150px}
+.k-disp{font:700 58px/1 var(--font-num);text-align:center;background:var(--sunk);border-radius:14px;padding:12px;min-height:82px;display:flex;align-items:center;justify-content:center;letter-spacing:.04em;font-variant-numeric:tabular-nums;border:2px solid transparent;transition:background .2s,border-color .2s}
+.k-disp .ph{font:500 17px var(--font-ui);color:var(--muted);letter-spacing:0}
+.k-disp.right{border-color:var(--ok);background:var(--ok-soft)}
+.k-disp.wrong{border-color:var(--wok);background:var(--wok-soft)}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key{height:58px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font:700 30px/1 var(--font-num);cursor:pointer;box-shadow:0 2px 0 var(--line);touch-action:manipulation}
+.key:active{transform:translateY(2px);box-shadow:none}
+.key.alt{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.key.del{font:600 15px var(--font-ui)}
+.key.zero{grid-column:span 2}
+.key.ok{grid-column:span 2;background:var(--wok);color:var(--wok-ink);border-color:var(--wok);font:700 18px var(--font-ui)}
+.k-st{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.k-st b{color:var(--ink);font-size:16px}
+.k-status{display:flex;flex-direction:column;gap:6px}
+
+/* Match */
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (min-width:560px){.mgrid{grid-template-columns:repeat(4,1fr)}}
+.tile{min-height:86px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);padding:10px 8px;cursor:pointer;font-weight:600;font-size:15px;line-height:1.25;transition:opacity .25s,transform .25s,border-color .15s;overflow-wrap:anywhere;touch-action:manipulation}
+.tile.code{font:700 36px/1 var(--font-num)}
+.tile.sel{border-color:var(--wok);background:var(--wok-soft)}
+.tile.gone{opacity:0;transform:scale(.9);pointer-events:none}
+.tile.miss{animation:shake .4s;border-color:var(--wok)}
+@keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+
+/* Tips */
+.tips{display:flex;flex-direction:column;gap:22px}
+.tips section{display:flex;flex-direction:column;gap:10px}
+.tips h2{font:700 19px/1.2 var(--font-ui);margin:0;display:flex;align-items:center;gap:10px}
+.tips h3{font-size:14px;margin:4px 0 0}
+.tips p,.tips ul{margin:0;max-width:62ch}
+.tips ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.mx-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-inline:-4px}
+.mx{border-collapse:separate;border-spacing:4px;font-variant-numeric:tabular-nums}
+.mx thead th{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:2px 2px;white-space:nowrap;vertical-align:bottom}
+.mx thead th i{display:block;font:700 15px/1.1 var(--font-num);font-style:normal;color:var(--ink)}
+.mx tbody th{text-align:left;color:var(--ink);font-weight:600;font-size:13px;white-space:nowrap;padding-right:4px}
+.cell{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:48px;padding:6px 5px;border-radius:8px;background:var(--surface);border:1px solid var(--line)}
+.cell b{font:700 21px/1 var(--font-num)}
+.cell small{font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.cell.exc{border-color:var(--warn);background:var(--warn-soft)}
+.cell.empty{background:transparent;border-style:dashed;color:var(--muted);min-height:44px}
+.legend{font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--warn-soft);border:1px solid var(--warn);vertical-align:-1px;margin-right:4px}
+.vocab{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px}
+.vocab div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--muted)}
+.vocab b{display:block;font-size:15px;color:var(--ink)}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.plist div{display:flex;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px}
+.plist b{font:700 17px var(--font-num);font-variant-numeric:tabular-nums}
+.mini{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.mini div{display:flex;gap:10px;align-items:baseline}
+.mini b{font:700 18px var(--font-num);min-width:40px}
+
+/* List */
+.search input{width:100%;font:500 16px var(--font-ui);padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.lrow{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.l-code{font:700 25px/1.1 var(--font-num)}
+.lrow.known .l-code{color:var(--ok)}
+.l-main{display:flex;flex-direction:column;min-width:0}
+.l-main b{font-size:15px}
+.l-main span{font-size:13px;color:var(--muted)}
+.l-price{font:700 17px/1.3 var(--font-num);text-align:right;max-width:88px;font-variant-numeric:tabular-nums}
+.l-group{padding-top:14px}
+.reset{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:8px}
+
+.done{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.done p{margin:0;max-width:40ch}
+.big-num{font:700 88px/.9 var(--font-num);font-variant-numeric:tabular-nums}
+.big-num small{font-size:38px;color:var(--muted)}
+.foot{font-size:12px;color:var(--muted);padding-block:14px}
+
+@media (prefers-reduced-motion:reduce){
+  .card-inner,.card,.tile,.meter span,.pbar span{transition:none}
+  .tile.miss{animation:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand-row">
+      <span class="mark">MAI WOK<small>ZO</small></span>
+      <h1>Menu trưa</h1>
+      <span class="prog" id="prog"></span>
+    </div>
+    <div class="pbar"><span id="progbar"></span></div>
+    <nav class="chips" id="decks" aria-label="Bộ thẻ"></nav>
+    <nav class="modes" id="modes" aria-label="Chế độ học"></nav>
+  </div>
+</header>
+<main class="wrap" id="panel"><p class="note">Đang mở…</p></main>
+<footer class="wrap foot">Số, tên và giá theo bảng Kasse ngày 01.11.2026. Tiến độ học lưu riêng trên máy của mỗi người.</footer>
+<noscript><p class="wrap">Cần bật JavaScript để dùng app.</p></noscript>
+
+<script>
+(function () {
+"use strict";
+
+/* [số, tên trên Kasse, giải thích tiếng Việt, khách nói (tiếng Đức), giá, nhóm, nhãn] */
+const RAW = [
+  ["B1","Box Mi Chay","Mì xào rau, trứng · 3 size","Bratnudeln mit Gemüse und Ei","5,00 / 6,00 / 8,90","box","chay"],
+  ["B2","Box Mi Ga","Mì xào gà, trứng · 3 size","Bratnudeln mit Hühnerfleisch und Ei","5,50 / 6,50 / 9,90","box",""],
+  ["B3","Box Com Rang chay","Cơm rang rau, trứng · 3 size","Bratreis mit Gemüse und Ei","5,00 / 6,00 / 8,90","box","chay"],
+  ["B4","Box Com rang ga","Cơm rang gà, trứng · 3 size","Bratreis mit Hühnerfleisch und Ei","5,50 / 6,50 / 9,90","box",""],
+  ["B5","Box Ga cuc","Mì xào gà cục chiên giòn · 3 size","Bratnudeln mit knusprigem Hähnchenstück","5,50 / 6,50 / 9,90","box",""],
+  ["B6","Box mi vit","Mì xào vịt giòn","Bratnudeln mit knuspriger Ente","14,50","box",""],
+  ["B7","Box Mi Ga Dui","Mì xào gà đùi quay","Bratnudeln mit geröstetem Chicken","13,50","box",""],
+  ["B8","Box Mi Cha gio","Mì xào kèm chả giò mini","Bratnudeln mit Minifrühlingsrolle","6,50","box","chay"],
+  ["B9","Box Ga cuc chua ngot","Gà cục sốt chua ngọt, cơm","Chickenstreifen mit Reis, süß-sauer","6,50","box",""],
+  ["B10","Box Rau Den","Rau sốt đen (Chop Suey), cơm","Gemüse Chop Suey mit Reis","7,90","box","chay"],
+  ["B11","Box Ga Den","Gà sốt đen (Chop Suey), cơm","Chop Suey mit Hühnerfleisch und Reis","7,90","box",""],
+  ["B12","Box Rau Lac","Rau sốt lạc, cơm","Erdnuss-Sauce mit Gemüse und Reis","7,90","box","chay"],
+  ["B13","Box Ga Lac","Gà sốt lạc, cơm","Erdnuss-Sauce mit Hühnerfleisch und Reis","7,90","box",""],
+  ["B14","Box Rau Do","Rau cà ri đỏ, cơm","Red Curry mit Gemüse und Reis","7,90","box","chay cay"],
+  ["B15","Box Ga Do","Gà cà ri đỏ, cơm","Red Curry mit Hühnerfleisch und Reis","7,90","box","cay"],
+  ["B16","Box Rau mango","Rau sốt xoài, cơm","Mango mit Gemüse und Reis","7,90","box","chay"],
+  ["B17","Box Ga Mango","Gà sốt xoài, cơm","Mango mit Hühnerfleisch und Reis","7,90","box",""],
+  ["B20","Cha Gio mini (10)","Chả giò chay mini, 10 cái","Minifrühlingsrollen, 10 Stück","4,50","box","chay"],
+  ["B21","Goi cuon Mango","Gỏi cuốn xoài","Sommerrolle mit Mango","7,50","box","chay"],
+  ["B22","Goi cuon tom","Gỏi cuốn tôm","Sommerrolle mit Garnelen","8,50","box",""],
+  ["BX","Box Mi Vit (Angebot)","Mì xào vịt · giá khuyến mãi","Bratnudeln mit knuspriger Ente, Angebot","9,90","box",""],
+
+  ["1","Pekingsuppe","Súp Bắc Kinh: vịt, rau, trứng, chua cay","Pekingsuppe","3,90","a","cay"],
+  ["2","Thai-Suppe","Súp Thái, gà","Thai-Suppe","4,90","a","cay"],
+  ["3","Gyoza-Chicken","Gyoza gà, sốt teriyaki","Gyoza mit Hühnerfleisch","5,90","a",""],
+  ["4","Goi cuon tom (4)","Gỏi cuốn tôm, 4 cuốn","Sommerrollen mit Garnelen, 4 Stück","8,50","a",""],
+  ["5","Nem VN (2)","Nem rán, 2 cái","Nem, vietnamesische Frühlingsrollen","5,50","a",""],
+  ["6","Com Rang Ga xao","Cơm rang gà","Gebratener Reis mit Hühnerfleisch","8,90","a",""],
+  ["7","Com rang vit","Cơm rang vịt giòn","Gebratener Reis mit knuspriger Ente","14,50","a",""],
+  ["8","Com Rang Tom","Cơm rang tôm lớn","Gebratener Reis mit Riesengarnelen","14,90","a",""],
+  ["9","Mi Ga Xao","Mì xào gà","Gebratene Nudeln mit Hühnerfleisch","8,90","a",""],
+  ["10","Mi Paniert","Mì xào gà chiên bột","Gebratene Nudeln mit paniertem Hühnerfleisch","12,90","a",""],
+  ["11","Mi Ga Dui","Mì xào gà đùi quay","Gebratene Nudeln mit geröstetem Chicken","13,50","a",""],
+  ["12","Mi Vit","Mì xào vịt giòn","Gebratene Nudeln mit knuspriger Ente","14,50","a",""],
+  ["13","Mi Tom","Mì xào tôm lớn","Gebratene Nudeln mit Riesengarnelen","14,90","a",""],
+  ["15","Pho Bo","Phở bò","Pho mit Rindfleisch","13,90","a",""],
+  ["16","Pho Ga","Phở gà","Pho mit Hühnerfleisch","13,50","a",""],
+  ["20","Ga Xao Den","Gà xào · sốt đen (Chop Suey)","Chop Suey mit Hühnerfleisch","12,90","a",""],
+  ["21","Paniert Den","Gà chiên bột · sốt đen","Chop Suey mit paniertem Hühnerfleisch","13,50","a",""],
+  ["22","Ga Dui Den","Gà đùi quay · sốt đen","Chop Suey mit geröstetem Chicken","13,90","a",""],
+  ["23","Vit Den","Vịt giòn · sốt đen","Chop Suey mit knuspriger Ente","14,90","a",""],
+  ["24","Bo Den","Bò · sốt đen","Chop Suey mit Rindfleisch","13,90","a",""],
+  ["25","Tom Sot Den","Tôm lớn · sốt đen","Chop Suey mit Riesengarnelen","14,90","a",""],
+
+  ["30","Ga xao chua ngot","Gà xào · chua ngọt","Süß-Sauer mit Hühnerfleisch","12,50","b",""],
+  ["31","Paniert chua ngot","Gà chiên bột · chua ngọt","Süß-Sauer mit paniertem Hühnerfleisch","13,30","b",""],
+  ["32","Vit chua ngot","Vịt giòn · chua ngọt","Süß-Sauer mit knuspriger Ente","14,50","b",""],
+  ["40","Ga Lac","Gà xào · sốt lạc","Erdnuss-Sauce mit Hühnerfleisch","12,90","b",""],
+  ["41","Paniert Lac","Gà chiên bột · sốt lạc","Erdnuss-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
+  ["42","Ga dui Lac","Gà đùi quay · sốt lạc","Erdnuss-Sauce mit geröstetem Chicken","14,30","b",""],
+  ["43","Vit Lac","Vịt giòn · sốt lạc","Erdnuss-Sauce mit knuspriger Ente","14,90","b",""],
+  ["50","Ga Do","Gà xào · cà ri đỏ","Red Curry mit Hühnerfleisch","12,90","b","cay"],
+  ["51","Paniert Do","Gà chiên bột · cà ri đỏ","Red Curry mit paniertem Hühnerfleisch","13,90","b","cay"],
+  ["52","Ga Dui Do","Gà đùi quay · cà ri đỏ","Red Curry mit geröstetem Chicken","14,30","b","cay"],
+  ["53","Vit Do","Vịt giòn · cà ri đỏ","Red Curry mit knuspriger Ente","14,90","b","cay"],
+  ["54","Bo Do","Bò · cà ri đỏ","Red Curry mit Rindfleisch","13,90","b","cay"],
+  ["55","Tom Do","Tôm lớn · cà ri đỏ","Red Curry mit Riesengarnelen","14,90","b","cay"],
+  ["60","Mango Ga xao","Gà xào · sốt xoài","Mango-Sauce mit Hühnerfleisch","12,90","b",""],
+  ["61","Mango Paniert","Gà chiên bột · sốt xoài","Mango-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
+  ["63","Mango Vit","Vịt giòn · sốt xoài","Mango-Sauce mit knuspriger Ente","14,90","b",""],
+  ["64","Mango Tom","Tôm lớn · sốt xoài","Mango-Sauce mit Riesengarnelen","14,90","b",""],
+  ["65","BBQ Ga Xao","Gà xào · sốt BBQ","BBQ-Sauce mit Hühnerfleisch","12,90","b",""],
+  ["66","BBQ Paniert","Gà chiên bột · sốt BBQ","BBQ-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
+  ["67","BBQ Ga Dui","Gà đùi quay · sốt BBQ","BBQ-Sauce mit geröstetem Chicken","13,90","b",""],
+  ["68","BBQ Vit","Vịt giòn · sốt BBQ","BBQ-Sauce mit knuspriger Ente","14,90","b",""],
+  ["69","BBQ Rindfleisch","Bò · sốt BBQ","BBQ-Sauce mit Rindfleisch","13,90","b",""],
+
+  ["70","Pad Thai Tom","Pad Thai tôm","Pad Thai mit Garnelen","14,90","c","cay"],
+  ["71","Bun Nem","Bún nem","Bun Nem","10,00","c",""],
+  ["72","Bun Bo Nam Bo","Bún bò Nam Bộ","Bun Bo Nam Bo","10,00","c",""],
+  ["78","Udon Paniert","Udon xào gà chiên bột, sốt teriyaki","Gebratene Udon-Nudeln mit paniertem Hühnerfleisch","13,90","c",""],
+  ["79","TomYum Tom","Súp Tom Yum, udon, tôm lớn","Tom Yum mit Riesengarnelen","14,90","c","cay"],
+  ["80","Rau den","Rau · sốt đen","Chop Suey mit Gemüse","11,90","c","chay"],
+  ["81","Rau lac","Rau · sốt lạc","Erdnuss-Sauce mit Gemüse","11,90","c","chay"],
+  ["82","Rau Do","Rau · cà ri đỏ","Red Curry mit Gemüse","11,90","c","chay cay"],
+  ["83","Mango chay","Rau · sốt xoài","Mango-Sauce mit Gemüse","11,90","c","chay"],
+  ["84","BBQ Chay","Rau · sốt BBQ","BBQ-Sauce mit Gemüse","11,90","c","chay"],
+  ["85","Tofu Den","Đậu phụ, rau · sốt đen","Chop Suey mit Tofu","12,90","c","chay"],
+  ["86","Tofu Lac","Đậu phụ, rau · sốt lạc","Erdnuss-Sauce mit Tofu","12,90","c","chay"],
+  ["87","Tofu Do","Đậu phụ, rau · cà ri đỏ","Red Curry mit Tofu","12,90","c","chay cay"],
+  ["88","tofu mango","Đậu phụ, rau · sốt xoài","Mango-Sauce mit Tofu","12,90","c","chay"],
+  ["89","tofu BBQ","Đậu phụ, rau · sốt BBQ","BBQ-Sauce mit Tofu","12,90","c","chay"],
+  ["90","Cha Gio mini (10)","Chả giò chay mini, 10 cái","Minifrühlingsrollen, 10 Stück","4,50","c","chay"],
+  ["91","Gyoza chay","Gyoza rau","Vegane Gyoza","6,00","c","chay"],
+  ["92","Goi Cuon chay","Gỏi cuốn đậu phụ","Sommerrolle mit Tofu","7,50","c","chay"],
+  ["93","Com rang chay","Cơm rang rau, trứng","Bratreis mit Gemüse und Ei","7,90","c","chay"],
+  ["94","Mi Chay","Mì xào rau, trứng","Bratnudeln mit Gemüse und Ei","7,90","c","chay"],
+  ["95","Pad Thai Tofu","Pad Thai đậu phụ","Pad Thai mit Tofu","13,50","c","chay"],
+  ["96","Pho Tofu","Phở đậu phụ","Pho mit Tofu","13,00","c","chay"],
+  ["97","Tom Yum Tofu","Súp Tom Yum, udon, đậu phụ","Tom Yum mit Tofu","13,00","c","chay cay"],
+  ["98","Bún-tofu","Bún đậu phụ, rau thơm, lạc","Bun mit Tofu","12,50","c",""]
+];
+
+const GROUP_NAME = { box: "Box to go", a: "Mittag 1–25", b: "Mittag 30–69", c: "Mittag 70–98" };
+const DECKS = [["box", "Box to go"], ["a", "1–25"], ["b", "30–69"], ["c", "70–98"], ["all", "Tất cả"]];
+const MODES = [["cards", "Thẻ"], ["learn", "Học"], ["kasse", "Bấm số"], ["match", "Ghép"], ["tips", "Mẹo"], ["list", "Bảng"]];
+
+const ITEMS = RAW.map(r => ({ c: r[0], k: r[1], v: r[2], d: r[3], p: r[4], g: r[5], tags: r[6] ? r[6].split(" ") : [] }));
+const BY = Object.fromEntries(ITEMS.map(i => [i.c, i]));
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+function norm(s) {
+  return String(s).toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const deText = i => (i.g === "box" ? i.d + " (Box)" : i.d);
+const groupChip = i => `<span class="grp${i.g === "box" ? " box" : ""}">${GROUP_NAME[i.g]}</span>`;
+const tagHtml = i => i.tags.map(t => `<span class="tag ${t}">${t === "chay" ? "Chay" : "Cay"}</span>`).join("");
+const fmtS = ms => (ms / 1000).toFixed(1).replace(".", ",") + " s";
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("mwmenu_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("mwmenu_" + k, JSON.stringify(v)); } catch (e) { /* storage blocked: progress just isn't kept */ } }
+};
+
+/* timers are cleared whenever the mode or deck changes */
+const timers = new Set();
+function later(fn, ms) { const t = setTimeout(() => { timers.delete(t); fn(); }, ms); timers.add(t); return t; }
+function every(fn, ms) { const t = setInterval(fn, ms); timers.add(t); return t; }
+function clearAll() { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers.clear(); }
+
+/* ---------- state ---------- */
+let known = new Set(store.get("known", []).filter(c => BY[c]));
+const saveKnown = () => store.set("known", [...known]);
+let deck = store.get("deck", "box"); if (!DECKS.some(d => d[0] === deck)) deck = "box";
+let mode = store.get("mode", "cards"); if (!MODES.some(m => m[0] === mode)) mode = "cards";
+let onKey = null;
+const panel = $("#panel");
+const deckItems = () => (deck === "all" ? ITEMS : ITEMS.filter(i => i.g === deck));
+const deckName = () => (deck === "all" ? "cả menu trưa" : GROUP_NAME[deck]);
+
+/* ---------- chrome ---------- */
+function renderChrome() {
+  $("#decks").innerHTML = DECKS.map(([id, label]) => {
+    const n = id === "all" ? ITEMS.length : ITEMS.filter(i => i.g === id).length;
+    return `<button class="chip${id === deck ? " on" : ""}${id === "box" ? " box" : ""}" data-deck="${id}" aria-pressed="${id === deck}">${label}<span>${n}</span></button>`;
+  }).join("");
+  $("#modes").innerHTML = MODES.map(([id, label]) =>
+    `<button class="mode${id === mode ? " on" : ""}" data-mode="${id}" aria-pressed="${id === mode}">${label}</button>`).join("");
+  updateProgress();
+}
+function updateProgress() {
+  const items = deckItems();
+  const k = items.filter(i => known.has(i.c)).length;
+  $("#prog").innerHTML = `<b>${k}</b>/${items.length} đã thuộc`;
+  $("#progbar").style.width = (items.length ? (k / items.length) * 100 : 0) + "%";
+}
+$("#decks").addEventListener("click", e => {
+  const b = e.target.closest("[data-deck]"); if (!b) return;
+  deck = b.dataset.deck; store.set("deck", deck); go();
+});
+$("#modes").addEventListener("click", e => {
+  const b = e.target.closest("[data-mode]"); if (!b) return;
+  mode = b.dataset.mode; store.set("mode", mode); go();
+});
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.closest && e.target.closest("input,textarea,select")) return;
+  if (onKey) onKey(e);
+});
+function go() {
+  clearAll(); onKey = null;
+  renderChrome();
+  ({ cards: Cards, learn: Learn, kasse: Kasse, match: Match, tips: Tips, list: List })[mode]();
+}
+
+/* ======================= THẺ (flashcards) ======================= */
+const fc = { front: store.get("fcFront", "code"), shuffle: store.get("fcShuffle", false), onlyNew: false, order: [], idx: 0, yes: 0, missed: [] };
+
+function Cards(codes) {
+  const items = deckItems();
+  let pool = codes ? codes.map(c => BY[c]) : (fc.onlyNew ? items.filter(i => !known.has(i.c)) : items);
+  if (!pool.length) {
+    panel.innerHTML = `<section class="done"><div class="big-num">${items.length}<small>/${items.length}</small></div>
+      <p>Bạn đã thuộc hết ${esc(deckName())}. Bỏ chọn “Chỉ thẻ chưa thuộc” để ôn lại.</p>
+      <div class="row2 one"><button class="btn big primary" id="all">Ôn lại cả bộ</button></div></section>`;
+    $("#all").onclick = () => { fc.onlyNew = false; Cards(); };
+    return;
+  }
+  const list = pool.map(i => i.c);
+  fc.order = fc.shuffle ? shuffle(list) : list;
+  fc.idx = 0; fc.yes = 0; fc.missed = [];
+  drawCard();
+}
+
+function frontHtml(i) {
+  const k = known.has(i.c) ? `<span class="f-known">Đã thuộc</span>` : "";
+  if (fc.front === "name") return `${k}${groupChip(i)}<div class="f-name">${esc(i.k)}</div><div class="f-sub">${esc(i.v)}</div>`;
+  if (fc.front === "de") return `${k}${groupChip(i)}<div class="f-label">Khách nói</div><div class="f-de">„${esc(deText(i))}“</div>`;
+  return `${k}${groupChip(i)}<div class="f-code">${esc(i.c)}</div>`;
+}
+function backHtml(i) {
+  return `<div class="b-head">${groupChip(i)}<span class="b-code">${esc(i.c)}</span></div>
+    <div class="b-name">${esc(i.k)}</div>
+    <div class="b-vi">${esc(i.v)}</div>
+    <div class="b-de">„${esc(i.d)}“</div>
+    <div class="b-foot"><span class="price">${esc(i.p)} €</span>${tagHtml(i)}</div>`;
+}
+
+function drawCard() {
+  const total = fc.order.length;
+  if (fc.idx >= total) {
+    const miss = fc.missed.length;
+    panel.innerHTML = `<section class="done"><div class="big-num">${fc.yes}<small>/${total}</small></div>
+      <p>thẻ nhớ rồi trong lượt này.${miss ? ` Còn ${miss} thẻ cần học lại.` : " Giỏi lắm."}</p>
+      <div class="row2${miss ? "" : " one"}">${miss ? `<button class="btn big primary" id="again-miss">Học lại ${miss} thẻ</button>` : ""}
+      <button class="btn big" id="again">Làm lại cả bộ</button></div>
+      <p class="note">Muốn thử sức: sang <b>Bấm số</b> để luyện như lúc đứng quầy.</p></section>`;
+    if (miss) $("#again-miss").onclick = () => Cards(fc.missed.slice());
+    $("#again").onclick = () => Cards();
+    onKey = null;
+    return;
+  }
+  const i = BY[fc.order[fc.idx]];
+  panel.innerHTML = `
+    <div class="bar-row"><span class="count">Thẻ ${fc.idx + 1}/${total}</span><span>Chạm để lật · vuốt phải: nhớ, trái: chưa</span></div>
+    <div class="card" id="card" role="button" tabindex="0" aria-label="Lật thẻ ${esc(i.c)}">
+      <div class="card-inner">
+        <div class="face front">${frontHtml(i)}</div>
+        <div class="face back${fc.front === "code" ? "" : " ask-code"}">${backHtml(i)}</div>
+      </div>
+    </div>
+    <div class="row2">
+      <button class="btn big no" id="no">Chưa nhớ</button>
+      <button class="btn big ok" id="yes">Nhớ rồi</button>
+    </div>
+    <div class="opts-row">
+      <div class="seg" role="group" aria-label="Mặt trước của thẻ"><span class="seg-l">Mặt trước</span>
+        ${[["code", "Số"], ["name", "Tên Kasse"], ["de", "Tiếng Đức"]].map(([v, l]) =>
+          `<button class="seg-b${fc.front === v ? " on" : ""}" data-front="${v}" aria-pressed="${fc.front === v}">${l}</button>`).join("")}
+      </div>
+      <label class="tog"><input type="checkbox" id="shuf"${fc.shuffle ? " checked" : ""}> Trộn thẻ</label>
+      <label class="tog"><input type="checkbox" id="onlynew"${fc.onlyNew ? " checked" : ""}> Chỉ thẻ chưa thuộc</label>
+    </div>`;
+  bindCard();
+  $("#no").onclick = () => answerCard(false);
+  $("#yes").onclick = () => answerCard(true);
+  panel.querySelectorAll("[data-front]").forEach(b => b.onclick = () => { fc.front = b.dataset.front; store.set("fcFront", fc.front); drawCard(); });
+  $("#shuf").onchange = e => { fc.shuffle = e.target.checked; store.set("fcShuffle", fc.shuffle); Cards(); };
+  $("#onlynew").onchange = e => { fc.onlyNew = e.target.checked; Cards(); };
+  onKey = e => {
+    if (e.key === "ArrowRight") answerCard(true);
+    else if (e.key === "ArrowLeft") answerCard(false);
+    else if ((e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") && !e.target.closest("button,[role=button]")) { e.preventDefault(); flipCard(); }
+  };
+}
+function flipCard() { const c = $("#card"); if (c) c.classList.toggle("flipped"); }
+function answerCard(yes) {
+  const code = fc.order[fc.idx]; if (!code) return;
+  if (yes) { known.add(code); fc.yes++; } else { known.delete(code); fc.missed.push(code); }
+  saveKnown(); updateProgress();
+  fc.idx++; drawCard();
+}
+function bindCard() {
+  const card = $("#card");
+  let sx = null, sy = 0, dx = 0, moved = false, pid = null;
+  card.addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; dx = 0; moved = false; pid = e.pointerId; });
+  card.addEventListener("pointermove", e => {
+    if (sx === null || e.pointerId !== pid) return;
+    dx = e.clientX - sx; const dy = e.clientY - sy;
+    if (!moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { moved = true; try { card.setPointerCapture(pid); } catch (_) {} }
+    if (moved) { card.style.transform = `translateX(${dx}px) rotate(${dx / 30}deg)`; card.dataset.lean = dx > 50 ? "yes" : dx < -50 ? "no" : ""; }
+  });
+  const end = e => {
+    if (sx === null) return;
+    const wasMoved = moved; sx = null;
+    card.style.transform = ""; card.dataset.lean = "";
+    if (wasMoved) { if (dx > 70) answerCard(true); else if (dx < -70) answerCard(false); }
+    else if (e.type === "pointerup") flipCard();
+  };
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", end);
+  card.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flipCard(); } });
+}
+
+/* ======================= HỌC (adaptive multiple choice) ======================= */
+const ln = { qid: 0 };
+
+function similar(t, pool, n, key) {
+  const tw = new Set(norm(t.k).split(" ").filter(w => w && w !== "box"));
+  const tk = key(t);
+  const scored = pool.filter(x => x.c !== t.c && key(x) !== tk).map(x => {
+    let s = Math.random() * 1.6;
+    norm(x.k).split(" ").forEach(w => { if (tw.has(w)) s += 1.5; });
+    if (x.g === t.g) s += 0.8;
+    return [s, x];
+  }).sort((a, b) => b[0] - a[0]);
+  const out = [], seen = new Set([tk]);
+  for (const [, x] of scored) {
+    const k = key(x); if (seen.has(k)) continue;
+    seen.add(k); out.push(x); if (out.length === n) break;
+  }
+  return out;
+}
+function buildOpts(i, type) {
+  const pool = deckItems().length >= 8 ? deckItems() : ITEMS;
+  const key = type === "price" ? (x => x.p) : type === "de2code" ? (x => norm(deText(x))) : (x => norm(x.k));
+  return shuffle([i, ...similar(i, pool, 3, key)]);
+}
+function pickType(stage) {
+  const r = Math.random();
+  if (stage === 0) return r < 0.5 ? "code2name" : "name2code";
+  return r < 0.4 ? "de2code" : r < 0.65 ? "name2code" : r < 0.85 ? "price" : "code2name";
+}
+
+function Learn() {
+  const items = deckItems();
+  const pool = items.filter(i => !known.has(i.c));
+  if (!pool.length) {
+    panel.innerHTML = `<section class="done"><div class="big-num">${items.length}<small>/${items.length}</small></div>
+      <p>Bạn đã thuộc hết ${esc(deckName())}.</p>
+      <div class="row2 one"><button class="btn big primary" id="rev">Ôn lại cả bộ</button></div></section>`;
+    $("#rev").onclick = () => startLearn(items);
+    return;
+  }
+  startLearn(pool);
+}
+function startLearn(pool) {
+  ln.queue = shuffle(pool.map(i => i.c));
+  ln.stage = {}; ln.total = pool.length; ln.mastered = 0; ln.right = 0; ln.wrong = 0;
+  nextQ();
+}
+function nextQ() {
+  ln.qid++;
+  if (!ln.queue.length) {
+    panel.innerHTML = `<section class="done"><div class="big-num">${ln.total}</div>
+      <p>món đã thuộc trong lượt này. ${ln.right} lần đúng, ${ln.wrong} lần sai.</p>
+      <div class="row2"><button class="btn big primary" id="more">Học tiếp</button><button class="btn big" id="tok">Luyện bấm số</button></div></section>`;
+    $("#more").onclick = Learn;
+    $("#tok").onclick = () => { mode = "kasse"; store.set("mode", mode); go(); };
+    onKey = null;
+    return;
+  }
+  const code = ln.queue.shift();
+  const i = BY[code];
+  const type = pickType(ln.stage[code] || 0);
+  ln.cur = { code, type, opts: buildOpts(i, type), answered: false };
+  drawQ();
+}
+function drawQ() {
+  const { code, type, opts } = ln.cur;
+  const i = BY[code];
+  let prompt;
+  if (type === "code2name") prompt = `<div class="q-label">Số này là món gì?</div>${groupChip(i)}<div class="q-code">${esc(i.c)}</div>`;
+  else if (type === "name2code") prompt = `<div class="q-label">Bấm số nào?</div>${groupChip(i)}<div class="q-name">${esc(i.k)}</div><div class="q-sub">${esc(i.v)}</div>`;
+  else if (type === "de2code") prompt = `<div class="q-label">Khách nói · bấm số nào?</div><div class="q-de">„${esc(deText(i))}“</div>`;
+  else prompt = `<div class="q-label">Giá bao nhiêu?</div>${groupChip(i)}<div class="q-name"><span class="q-inl">${esc(i.c)}</span>${esc(i.k)}</div>`;
+  const optHtml = opts.map((o, n) => {
+    let body;
+    if (type === "code2name") body = `<span class="o-main">${esc(o.k)}</span><span class="o-sub">${esc(o.v)}</span>`;
+    else if (type === "price") body = `<span class="o-num">${esc(o.p)} €</span>`;
+    else body = `<span class="o-num">${esc(o.c)}</span>`;
+    return `<button class="opt" data-n="${n}"><span class="o-key">${n + 1}</span><span class="o-body">${body}</span></button>`;
+  }).join("");
+  const priceWide = type === "price" && opts.some(o => o.p.length > 6);
+  panel.innerHTML = `
+    <div class="bar-row"><span class="count">Đã thuộc ${ln.mastered}/${ln.total}</span><span>Mỗi món cần đúng 2 lần liền</span></div>
+    <div class="meter"><span style="width:${(ln.mastered / ln.total) * 100}%"></span></div>
+    <div class="q">${prompt}</div>
+    <div class="opts${type === "code2name" || priceWide ? "" : " grid2"}">${optHtml}</div>
+    <div class="fb" id="fb" aria-live="polite"></div>`;
+  panel.querySelectorAll(".opt").forEach(b => b.onclick = () => pickOpt(+b.dataset.n));
+  onKey = e => {
+    if (/^[1-4]$/.test(e.key)) pickOpt(+e.key - 1);
+    else if (e.key === "Enter" && ln.cur.answered) { e.preventDefault(); nextQ(); }
+  };
+}
+function pickOpt(n) {
+  const cur = ln.cur; if (!cur || cur.answered) return;
+  const o = cur.opts[n]; if (!o) return;
+  cur.answered = true;
+  const i = BY[cur.code];
+  const right = o.c === i.c;
+  const btns = panel.querySelectorAll(".opt");
+  btns.forEach((b, idx) => { b.disabled = true; if (cur.opts[idx].c === i.c) b.classList.add("right"); });
+  if (!right) btns[n].classList.add("wrong");
+  const st = ln.stage[i.c] || 0;
+  if (right) {
+    ln.right++;
+    if (st + 1 >= 2) { ln.mastered++; known.add(i.c); saveKnown(); updateProgress(); }
+    else { ln.stage[i.c] = st + 1; ln.queue.push(i.c); }
+  } else {
+    ln.wrong++; ln.stage[i.c] = 0;
+    ln.queue.splice(Math.min(2, ln.queue.length), 0, i.c);
+  }
+  const fb = $("#fb");
+  if (right) {
+    fb.innerHTML = `<b class="okt">Đúng.</b> <span>${esc(i.c)} · ${esc(i.k)} · ${esc(i.p)} €</span>`;
+    const q = ln.qid;
+    later(() => { if (ln.qid === q) nextQ(); }, 1000);
+  } else {
+    fb.innerHTML = `<b class="badt">Chưa đúng.</b> <span>Đáp án: <b>${esc(i.c)}</b> · ${esc(i.k)} · ${esc(i.p)} €</span><button class="btn primary" id="nx">Tiếp</button>`;
+    $("#nx").onclick = () => { if (ln.cur.answered) nextQ(); };
+  }
+}
+
+/* ======================= BẤM SỐ (Kasse keypad drill) ======================= */
+const ks = { ptype: store.get("ksType", "name"), input: "", streak: 0, recent: [], rush: false, score: 0, endAt: 0, lock: false, cur: null };
+const bestRush = () => (store.get("rush", {})[deck] || 0);
+
+function Kasse() {
+  ks.rush = false; ks.streak = 0; ks.recent = [];
+  panel.innerHTML = `
+    <div class="opts-row"><div class="seg" role="group" aria-label="Kiểu câu hỏi"><span class="seg-l">Hỏi bằng</span>
+      ${[["name", "Tên Kasse"], ["de", "Tiếng Đức"], ["mix", "Trộn"]].map(([v, l]) =>
+        `<button class="seg-b${ks.ptype === v ? " on" : ""}" data-pt="${v}" aria-pressed="${ks.ptype === v}">${l}</button>`).join("")}
+    </div></div>
+    <div class="k-status" id="kstat"></div>
+    <div class="q k-q" id="kprompt"></div>
+    <div class="k-disp" id="kdisp" aria-live="polite"></div>
+    <div class="fb" id="kfb" aria-live="polite"></div>
+    <div class="pad" id="pad">
+      ${["1", "2", "3", "B", "4", "5", "6", "X", "7", "8", "9", "del"].map(k =>
+        `<button class="key${k === "B" || k === "X" ? " alt" : ""}${k === "del" ? " del" : ""}" data-k="${k}" aria-label="${k === "del" ? "Xoá" : k}">${k === "del" ? "Xoá" : k}</button>`).join("")}
+      <button class="key zero" data-k="0">0</button>
+      <button class="key ok" data-k="ok">OK</button>
+    </div>
+    <button class="btn big primary" id="rush">Giờ cao điểm · 60 giây</button>`;
+  panel.querySelectorAll("[data-pt]").forEach(b => b.onclick = () => { ks.ptype = b.dataset.pt; store.set("ksType", ks.ptype); clearAll(); Kasse(); });
+  $("#pad").addEventListener("click", e => {
+    const b = e.target.closest("[data-k]"); if (!b) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    press(b.dataset.k);
+  });
+  $("#rush").onclick = startRush;
+  onKey = e => {
+    const k = e.key;
+    if (/^[0-9]$/.test(k)) press(k);
+    else if (/^[bx]$/i.test(k)) press(k.toUpperCase());
+    else if (k === "Backspace") { e.preventDefault(); press("del"); }
+    else if (k === "Enter") { e.preventDefault(); press("ok"); }
+  };
+  nextK();
+}
+function nextK() {
+  const items = deckItems();
+  let cand = items.filter(i => !ks.recent.includes(i.c));
+  if (!cand.length) cand = items;
+  const unk = cand.filter(i => !known.has(i.c));
+  const src = unk.length && Math.random() < 0.6 ? unk : cand;
+  const i = src[Math.floor(Math.random() * src.length)];
+  ks.recent.push(i.c);
+  if (ks.recent.length > Math.min(6, items.length - 1)) ks.recent.shift();
+  const t = ks.ptype === "mix" ? (Math.random() < 0.5 ? "name" : "de") : ks.ptype;
+  ks.cur = { code: i.c, t }; ks.input = ""; ks.lock = false;
+  $("#kprompt").innerHTML = t === "de"
+    ? `<div class="q-label">Khách nói</div><div class="q-de">„${esc(deText(i))}“</div>`
+    : `<div class="q-label">Bấm số cho món</div>${groupChip(i)}<div class="q-name">${esc(i.k)}</div><div class="q-sub">${esc(i.v)}</div>`;
+  $("#kfb").innerHTML = "";
+  showDisp("");
+  drawStatus();
+}
+function showDisp(cls) {
+  const d = $("#kdisp"); if (!d) return;
+  d.className = "k-disp" + (cls ? " " + cls : "");
+  d.innerHTML = ks.input ? esc(ks.input) : `<span class="ph">gõ số món</span>`;
+}
+function press(k) {
+  if (ks.lock || !ks.cur) return;
+  if (k === "ok") return submitK();
+  if (k === "del") ks.input = ks.input.slice(0, -1);
+  else if (ks.input.length < 3) ks.input += k;
+  showDisp("");
+}
+function acceptedCodes(i, t) {
+  const key = t === "de" ? norm(deText(i)) : norm(i.k);
+  return ITEMS.filter(x => (t === "de" ? norm(deText(x)) : norm(x.k)) === key && (t === "de" || x.g === i.g || x.c === i.c)).map(x => x.c);
+}
+function submitK() {
+  if (!ks.input) return;
+  const i = BY[ks.cur.code];
+  const ok = acceptedCodes(i, ks.cur.t).includes(ks.input.toUpperCase());
+  ks.lock = true;
+  if (ok) {
+    ks.streak++; if (ks.rush) ks.score++;
+    showDisp("right");
+    $("#kfb").innerHTML = `<b class="okt">Đúng.</b> <span>${esc(i.c)} · ${esc(i.p)} €</span>`;
+    drawStatus();
+    later(nextK, ks.rush ? 280 : 650);
+  } else {
+    ks.streak = 0;
+    showDisp("wrong");
+    $("#kfb").innerHTML = `<b class="badt">Sai.</b> <span>Đúng là <b>${esc(i.c)}</b> · ${esc(i.k)}</span>`;
+    drawStatus();
+    later(nextK, ks.rush ? 1300 : 1900);
+  }
+}
+function drawStatus() {
+  const el = $("#kstat"); if (!el) return;
+  if (ks.rush) {
+    const left = Math.max(0, ks.endAt - Date.now());
+    el.innerHTML = `<div class="meter warm"><span style="width:${left / 600}%"></span></div>
+      <div class="k-st"><span><b>${ks.score}</b> món đúng</span><span>còn <b>${Math.ceil(left / 1000)}</b> s</span></div>`;
+  } else {
+    el.innerHTML = `<div class="k-st"><span>Chuỗi đúng <b>${ks.streak}</b></span><span>Kỷ lục 60 s (${esc(deckName())}): <b>${bestRush()}</b></span></div>`;
+  }
+}
+function startRush() {
+  clearAll();
+  ks.rush = true; ks.score = 0; ks.streak = 0; ks.endAt = Date.now() + 60000;
+  $("#rush").hidden = true;
+  nextK();
+  every(() => { if (Date.now() >= ks.endAt) endRush(); else drawStatus(); }, 200);
+}
+function endRush() {
+  clearAll();
+  ks.rush = false;
+  const best = store.get("rush", {});
+  const prev = best[deck] || 0;
+  const record = ks.score > prev;
+  if (record) { best[deck] = ks.score; store.set("rush", best); }
+  onKey = null;
+  panel.innerHTML = `<section class="done"><div class="big-num">${ks.score}</div>
+    <p>món bấm đúng trong 60 giây (${esc(deckName())}).${record ? " Kỷ lục mới!" : ` Kỷ lục: ${prev}.`}</p>
+    <div class="row2"><button class="btn big primary" id="again">Chơi lại</button><button class="btn big" id="calm">Luyện thường</button></div></section>`;
+  $("#again").onclick = () => { Kasse(); startRush(); };
+  $("#calm").onclick = Kasse;
+}
+
+/* ======================= GHÉP (match game) ======================= */
+const mt = {};
+const bestMatch = () => store.get("match", {})[deck];
+
+function Match() {
+  const seen = new Set(), picks = [];
+  for (const i of shuffle(deckItems())) {
+    const k = norm(i.k); if (seen.has(k)) continue;
+    seen.add(k); picks.push(i); if (picks.length === 6) break;
+  }
+  mt.tiles = shuffle([...picks.map(i => ({ id: i.c, kind: "code", text: i.c })), ...picks.map(i => ({ id: i.c, kind: "name", text: i.k }))]);
+  mt.sel = null; mt.left = picks.length; mt.pen = 0; mt.start = 0; mt.done = false; mt.busy = false;
+  const b = bestMatch();
+  panel.innerHTML = `
+    <div class="bar-row"><span class="count">Ghép số với tên món</span><span id="mtime">0,0 s</span></div>
+    <div class="mgrid" id="mgrid">${mt.tiles.map((t, n) => `<button class="tile ${t.kind}" data-n="${n}">${esc(t.text)}</button>`).join("")}</div>
+    <p class="note">Chọn sai cộng 1 giây. Kỷ lục ${esc(deckName())}: <b>${b ? fmtS(b) : "chưa có"}</b></p>`;
+  $("#mgrid").onclick = e => { const t = e.target.closest(".tile"); if (t) tapTile(t); };
+}
+const mElapsed = () => Date.now() - mt.start + mt.pen;
+function tapTile(b) {
+  if (mt.done || mt.busy || b.classList.contains("gone")) return;
+  if (!mt.start) {
+    mt.start = Date.now();
+    every(() => { const el = $("#mtime"); if (el) el.textContent = fmtS(mElapsed()); }, 100);
+  }
+  const n = +b.dataset.n;
+  if (mt.sel === null) { mt.sel = n; b.classList.add("sel"); return; }
+  if (mt.sel === n) { b.classList.remove("sel"); mt.sel = null; return; }
+  const a = mt.tiles[mt.sel], t = mt.tiles[n];
+  const ab = panel.querySelector(`.tile[data-n="${mt.sel}"]`);
+  if (a.kind === t.kind) { ab.classList.remove("sel"); mt.sel = n; b.classList.add("sel"); return; }
+  ab.classList.remove("sel"); mt.sel = null;
+  if (a.id === t.id) {
+    ab.classList.add("gone"); b.classList.add("gone");
+    if (--mt.left === 0) finishMatch();
+  } else {
+    mt.pen += 1000; mt.busy = true;
+    ab.classList.add("miss"); b.classList.add("miss");
+    later(() => { ab.classList.remove("miss"); b.classList.remove("miss"); mt.busy = false; }, 450);
+  }
+}
+function finishMatch() {
+  const time = mElapsed();
+  clearAll(); mt.done = true;
+  const best = store.get("match", {});
+  const prev = best[deck];
+  const record = !prev || time < prev;
+  if (record) { best[deck] = time; store.set("match", best); }
+  panel.innerHTML = `<section class="done"><div class="big-num">${fmtS(time).replace(" s", "")}<small> giây</small></div>
+    <p>${record ? "Kỷ lục mới cho " + esc(deckName()) + "!" : "Kỷ lục " + esc(deckName()) + ": " + fmtS(prev) + "."}</p>
+    <div class="row2 one"><button class="btn big primary" id="again">Chơi lại</button></div></section>`;
+  $("#again").onclick = Match;
+}
+
+/* ======================= MẸO (patterns) ======================= */
+function cellHtml(c, ci, rule) {
+  if (!c) return `<td><span class="cell empty">–</span></td>`;
+  const it = BY[c];
+  const exc = rule && Number(c) % 10 !== ci;
+  return `<td><span class="cell${exc ? " exc" : ""}"><b>${esc(c)}</b><small>${esc(it.p)}</small></span></td>`;
+}
+function matrix(cols, rows, rule) {
+  return `<div class="mx-wrap"><table class="mx"><thead><tr><th></th>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(([label, codes]) => `<tr><th scope="row">${label}</th>${codes.map((c, ci) => cellHtml(c, ci, rule)).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function mini(codes) {
+  return `<div class="mini">${codes.map(c => { const i = BY[c]; return `<div><b>${esc(c)}</b><span>${esc(i.k)} · ${esc(i.p)}</span></div>`; }).join("")}</div>`;
+}
+function Tips() {
+  const MEAT = ["Gà xào<i>_0</i>", "Paniert<i>_1</i>", "Gà đùi<i>_2</i>", "Vịt<i>_3</i>", "Bò<i>_4</i>", "Tôm<i>_5</i>"];
+  const MEAT_PLAIN = ["Gà xào", "Paniert", "Gà đùi", "Vịt", "Bò", "Tôm"];
+  panel.innerHTML = `<div class="tips">
+  <section>
+    <h2><span class="grp box">Box to go</span>B1 – BX</h2>
+    <ul>
+      <li><b>B1–B4:</b> số lẻ là chay, số chẵn là gà. B1–B2 là mì, B3–B4 là cơm rang. B5 là gà cục.</li>
+      <li>Ba size Klein / Groß / Mega. Chay 5,00 / 6,00 / 8,90, có gà 5,50 / 6,50 / 9,90.</li>
+      <li><b>B10–B17:</b> đi theo cặp sốt, số chẵn là Rau, số lẻ là Gà. Tất cả 7,90.</li>
+    </ul>
+    ${matrix(["Chay", "Gà"], [["Mì", ["B1", "B2"]], ["Cơm rang", ["B3", "B4"]]], false)}
+    ${matrix(["Rau", "Gà"], [["Đen", ["B10", "B11"]], ["Lạc", ["B12", "B13"]], ["Đỏ", ["B14", "B15"]], ["Mango", ["B16", "B17"]]], false)}
+    ${mini(["B5", "B6", "B7", "B8", "B9", "B20", "B21", "B22", "BX"])}
+  </section>
+
+  <section>
+    <h2><span class="grp">Mittag</span>Hàng chục là sốt, hàng đơn vị là thịt</h2>
+    <p>2_ Đen · 3_ Chua ngọt · 4_ Lạc · 5_ Đỏ · 60–64 Mango · 65–69 BBQ. Số cuối: <b>0</b> gà xào, <b>1</b> paniert, <b>2</b> gà đùi, <b>3</b> vịt, <b>4</b> bò, <b>5</b> tôm.</p>
+    ${matrix(MEAT, [
+      ["Đen", ["20", "21", "22", "23", "24", "25"]],
+      ["Chua ngọt", ["30", "31", null, "32", null, null]],
+      ["Lạc", ["40", "41", "42", "43", null, null]],
+      ["Đỏ", ["50", "51", "52", "53", "54", "55"]],
+      ["Mango", ["60", "61", null, "63", null, "64"]],
+      ["BBQ", ["65", "66", "67", "68", "69", null]]
+    ], true)}
+    <p class="legend"><span class="sw"></span>Ô vàng là số không theo quy tắc: 32 là vịt chua ngọt, 64 là tôm xoài, BBQ đếm lại từ 65.</p>
+    <h3>Giá món sốt</h3>
+    <div class="plist">
+      <div><span>Gà xào</span><b>12,90</b></div><div><span>Paniert</span><b>13,50</b></div><div><span>Gà đùi</span><b>13,90</b></div>
+      <div><span>Bò</span><b>13,90</b></div><div><span>Vịt</span><b>14,90</b></div><div><span>Tôm</span><b>14,90</b></div>
+    </div>
+    <p class="legend">Khác giá: chua ngọt rẻ hơn (30 = 12,50 · 31 = 13,30 · 32 = 14,50). Gà đùi sốt Lạc và Đỏ (42, 52) 14,30. Paniert Đỏ (51) 13,90.</p>
+  </section>
+
+  <section>
+    <h2>Mì xào và cơm rang (6–13)</h2>
+    <p>Thứ tự thịt giống bảng trên, chỉ bỏ bò.</p>
+    ${matrix(MEAT_PLAIN, [["Mì xào", ["9", "10", "11", "12", null, "13"]], ["Cơm rang", ["6", null, null, "7", null, "8"]]], false)}
+  </section>
+
+  <section>
+    <h2>Chay (80–89)</h2>
+    <p>Sốt theo thứ tự Đen · Lạc · Đỏ · Mango · BBQ. 80–84 là rau (11,90), 85–89 là tofu (12,90), cộng 5 là ra số tofu.</p>
+    ${matrix(["Rau", "Tofu", "Box rau"], [["Đen", ["80", "85", "B10"]], ["Lạc", ["81", "86", "B12"]], ["Đỏ", ["82", "87", "B14"]], ["Mango", ["83", "88", "B16"]], ["BBQ", ["84", "89", null]]], false)}
+  </section>
+
+  <section>
+    <h2>Món lẻ còn lại</h2>
+    <h3>Súp và món nhỏ</h3>${mini(["1", "2", "3", "4", "5", "15", "16"])}
+    <h3>Bún, Pad Thai, Udon</h3>${mini(["70", "71", "72", "78", "79"])}
+    <h3>Chay lẻ (90–98)</h3>${mini(["90", "91", "92", "93", "94", "95", "96", "97", "98"])}
+  </section>
+
+  <section>
+    <h2>Từ trên Kasse, khách nói thế nào</h2>
+    <div class="vocab">
+      <div><b>Den</b>sốt đen · Chop Suey</div>
+      <div><b>Lac</b>sốt lạc · Erdnuss</div>
+      <div><b>Do</b>cà ri đỏ · Red Curry</div>
+      <div><b>Mango</b>sốt xoài · Mango</div>
+      <div><b>chua ngot</b>Süß-Sauer</div>
+      <div><b>BBQ</b>BBQ-Sauce</div>
+      <div><b>Ga xao</b>gà · Hühnerfleisch</div>
+      <div><b>Paniert</b>gà chiên bột · paniertes Huhn</div>
+      <div><b>Ga Dui</b>gà đùi · geröstetes Chicken</div>
+      <div><b>Ga cuc</b>gà cục · knuspriges Hähnchen</div>
+      <div><b>Vit</b>vịt giòn · knusprige Ente</div>
+      <div><b>Bo</b>bò · Rindfleisch</div>
+      <div><b>Tom</b>tôm lớn · Riesengarnelen</div>
+      <div><b>Rau / chay</b>Gemüse · vegetarisch</div>
+    </div>
+  </section>
+  </div>`;
+}
+
+/* ======================= BẢNG (searchable list) ======================= */
+function List() {
+  panel.innerHTML = `
+    <div class="search"><input id="q" type="search" placeholder="Tìm số, tên Kasse hoặc tiếng Đức" autocomplete="off" aria-label="Tìm món"></div>
+    <div id="rows"></div>
+    <div class="reset" id="reset"><button class="btn" id="rs">Xoá tiến độ học trên máy này</button></div>`;
+  const draw = () => {
+    const raw = $("#q").value, words = norm(raw).split(" ").filter(Boolean);
+    const items = deckItems().filter(i => { const hay = norm(i.c + " " + i.k + " " + i.v + " " + i.d); return words.every(w => hay.includes(w)); });
+    let html = "", g = null;
+    items.forEach(i => {
+      if (deck === "all" && i.g !== g) { g = i.g; html += `<div class="l-group">${groupChip(i)}</div>`; }
+      html += `<div class="lrow${known.has(i.c) ? " known" : ""}"><span class="l-code">${esc(i.c)}</span>
+        <span class="l-main"><b>${esc(i.k)}</b><span>${esc(i.v)}</span><span>${esc(i.d)}</span></span>
+        <span class="l-price">${esc(i.p)}</span></div>`;
+    });
+    $("#rows").innerHTML = html || `<p class="note">Không có món nào khớp “${esc(raw)}”.</p>`;
+  };
+  $("#q").oninput = draw;
+  draw();
+  const askReset = () => {
+    $("#reset").innerHTML = `<span class="note">Xoá hết đánh dấu “đã thuộc” và kỷ lục?</span>
+      <button class="btn primary" id="rsy">Xoá</button><button class="btn" id="rsn">Thôi</button>`;
+    $("#rsy").onclick = () => { known = new Set(); saveKnown(); store.set("rush", {}); store.set("match", {}); updateProgress(); List(); };
+    $("#rsn").onclick = List;
+  };
+  $("#rs").onclick = askReset;
+}
+
+go();
+})();
+</script>
+</body>
+</html>
