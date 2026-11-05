@@ -37,7 +37,7 @@ const lunchSupplementMenu = [
   L("L25", "25", "Chop Suey", "Chop Suey Sauce mit Riesengarnelen", "Frisches Gemüse und Reis", 14.9, "5, 7, B, K, F"),
   L("L30", "30", "Süß-Sauer", "Süß-Sauer Sauce mit Hühnerfleisch", "Frisches Gemüse und Reis", 12.5, "5, 7, K"),
   L("L31", "31", "Süß-Sauer", "Süß-Sauer Sauce mit paniertem Hühnerfleisch", "Frisches Gemüse und Reis", 13.3, "5, 7, K"),
-  L("L32", "32", "Süß-Sauer", "Süß-Sauer Sauce mit knuspriger Ente", "Frisches Gemüse und Reis", 14.5, "5, 7, K", ["beliebt"]),
+  L("L33", "33", "Süß-Sauer", "Süß-Sauer Sauce mit knuspriger Ente", "Frisches Gemüse und Reis", 14.5, "5, 7, K", ["beliebt"]),
   L("L40", "40", "Erdnuss", "Erdnuss-Sauce mit Hühnerfleisch", "Frisches Gemüse und Reis", 12.9, "5, 7, E, G, K"),
   L("L41", "41", "Erdnuss", "Erdnuss-Sauce mit paniertem Hühnerfleisch", "Frisches Gemüse und Reis", 13.5, "5, 7, E, G, K"),
   L("L42", "42", "Erdnuss", "Erdnuss-Sauce mit geröstetem Chicken", "Frisches Gemüse und Reis", 14.3, "5, 7, E, G, K"),
