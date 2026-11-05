@@ -1,7 +1,7 @@
 /*
   MENÜ SCHNELL BEARBEITEN
   Die Angaben entsprechen den drei PDF-Karten vom 26.09.2026.
-  Mittagskarte (Box-Mega-Preise, Pad Thai Nr. 70, Box BX) an die Kasse vom 01.11.2026 angepasst.
+  Mittagskarte (Box-Mega-Preise, Pad Thai Nr. 75, Box BX) an die Kasse vom 01.11.2026 angepasst.
 */
 const imagePool = Array.from({ length: 24 }, (_, i) => `assets/images/dish-${String(i + 1).padStart(2, "0")}.webp`);
 const logoImage = "assets/images/logo.png";
@@ -59,7 +59,7 @@ const lunchSupplementMenu = [
   L("L69", "69", "BBQ", "BBQ Sauce mit Rindfleisch", "Frisches Gemüse und Reis", 13.9, "5, 7, B, E, F"),
   L("L71", "71", "Reisnudeln & Spezial", "Bun Nem", "Vietnamesische Frühlingsrollen mit Garnelen, Schweinefleisch, Rindfleisch, Reisnudeln und Gemüse", 10.0, "5, 7, E, F", ["beliebt"]),
   L("L72", "72", "Reisnudeln & Spezial", "Bun Bo Nam Bo", "Rindfleisch mit Reisnudeln, Zwiebeln, Sojasprossen und Zitronengras", 10.0, "5, 7, E, F", ["beliebt"]),
-  L("L75", "70", "Reisnudeln & Spezial", "Pad Thai", "Gebratene Reisbandnudeln mit Garnelen, Pak Choi und Pad Thai Art Sauce", 14.9, "5, 7, B, E, F", ["scharf"]),
+  L("L75", "75", "Reisnudeln & Spezial", "Pad Thai", "Gebratene Reisbandnudeln mit Garnelen, Pak Choi und Pad Thai Art Sauce", 14.9, "5, 7, B, E, F", ["scharf"]),
   L("L78", "78", "Reisnudeln & Spezial", "Gebratene Udon-Nudeln", "Mit paniertem Hühnerfleisch, Pak Choi und Teriyaki-Sauce", 13.9, "5, 7, E, F"),
   L("L79", "79", "Reisnudeln & Spezial", "Tom Yum Thai Art", "Udon-Nudelsuppe mit Riesengarnelen, Pak Choi, Karotten und Paprika", 14.9, "5, 7, B", ["scharf"]),
   L("L80", "80", "Vegetarisch", "Chop Suey Sauce mit frischem Gemüse", "Mit Reis", 11.9, "5, 7, F, K", ["vegetarisch", "vegan"]),
