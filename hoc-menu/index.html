@@ -18,6 +18,8 @@
   --ok:#2F7A4D; --ok-ink:#FFFFFF; --ok-soft:#E1F0E6;
   --warn:#9A6700; --warn-soft:#F8EDD3;
   --shadow:rgba(28,26,25,.22);
+  /* sauce colours, same order and hues as the kitchen sheet (Bếp menu 05.11.2026) */
+  --s-den:#6B4226; --s-cn:#B85300; --s-lac:#8F6223; --s-do:#C62828; --s-mango:#9A6E00; --s-bbq:#8E1C45;
   --font-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-num:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
   color-scheme:light;
@@ -29,6 +31,7 @@
     --ok:#5BC388; --ok-ink:#0C1D13; --ok-soft:#163124;
     --warn:#E0A63A; --warn-soft:#382B12;
     --shadow:rgba(0,0,0,.6);
+    --s-den:#C99A78; --s-cn:#F08A3C; --s-lac:#D6A260; --s-do:#F06A5E; --s-mango:#F0B400; --s-bbq:#E2708F;
     color-scheme:dark;
   }
 }
@@ -71,6 +74,10 @@ main#panel{padding-block:16px 8px;display:flex;flex-direction:column;gap:14px}
 .tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
 .tag.chay{color:var(--ok);background:var(--ok-soft)}
 .tag.cay{color:var(--wok);background:var(--wok-soft)}
+.s-den{--sc:var(--s-den)} .s-cn{--sc:var(--s-cn)} .s-lac{--sc:var(--s-lac)}
+.s-do{--sc:var(--s-do)} .s-mango{--sc:var(--s-mango)} .s-bbq{--sc:var(--s-bbq)}
+.dot{display:inline-block;flex:none;width:10px;height:10px;border-radius:50%;background:var(--sc,var(--muted));margin-right:6px;vertical-align:0}
+.sec{display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--muted)}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:44px}
 .btn.big{min-height:54px;font-size:16px}
 .btn.primary{background:var(--wok);border-color:var(--wok);color:var(--wok-ink)}
@@ -107,8 +114,8 @@ main#panel{padding-block:16px 8px;display:flex;flex-direction:column;gap:14px}
 .f-de{font-weight:600;font-size:22px;line-height:1.35;max-width:26ch;text-wrap:balance}
 .f-known{position:absolute;top:14px;right:16px;font-size:12px;font-weight:600;color:var(--ok)}
 .b-head{display:flex;align-items:center;gap:10px}
-.b-code{font:700 44px/1 var(--font-num)}
-.ask-code .b-code{font-size:76px;color:var(--wok)}
+.b-code{font:700 44px/1 var(--font-num);color:var(--sc,inherit)}
+.ask-code .b-code{font-size:76px;color:var(--sc,var(--wok))}
 .b-name{font-weight:700;font-size:24px;line-height:1.2}
 .b-vi{font-size:15px}
 .b-de{font-size:14px;color:var(--muted);max-width:34ch}
@@ -194,9 +201,12 @@ main#panel{padding-block:16px 8px;display:flex;flex-direction:column;gap:14px}
 
 /* List */
 .search input{width:100%;font:500 16px var(--font-ui);padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-.lrow{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
-.l-code{font:700 25px/1.1 var(--font-num)}
-.lrow.known .l-code{color:var(--ok)}
+.lrow{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:start;padding:10px 0 10px 10px;border-bottom:1px solid var(--line);border-left:4px solid var(--sc,var(--line))}
+.l-code{font:700 25px/1.1 var(--font-num);color:var(--sc,var(--ink))}
+.lrow.known .l-main b::after{content:" ✓";color:var(--ok);font-weight:700}
+.l-sec{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:16px 0 6px;border-bottom:2px solid var(--sc,var(--ink))}
+.l-sec b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.l-sec span{font-size:13px;color:var(--muted)}
 .l-main{display:flex;flex-direction:column;min-width:0}
 .l-main b{font-size:15px}
 .l-main span{font-size:13px;color:var(--muted)}
@@ -230,7 +240,7 @@ main#panel{padding-block:16px 8px;display:flex;flex-direction:column;gap:14px}
   </div>
 </header>
 <main class="wrap" id="panel"><p class="note">Đang mở…</p></main>
-<footer class="wrap foot">Số, tên và giá theo bảng Kasse ngày 01.11.2026. Tiến độ học lưu riêng trên máy của mỗi người.</footer>
+<footer class="wrap foot">Số, tên, giá và màu sốt theo bảng bếp ngày 05.11.2026. Tiến độ học lưu riêng trên máy của mỗi người.</footer>
 <noscript><p class="wrap">Cần bật JavaScript để dùng app.</p></noscript>
 
 <script>
@@ -245,9 +255,10 @@ const RAW = [
   ["B4","Box Com rang ga","Cơm rang gà, trứng · 3 size","Bratreis mit Hühnerfleisch und Ei","5,50 / 6,50 / 9,90","box",""],
   ["B5","Box Ga cuc","Mì xào gà cục chiên giòn · 3 size","Bratnudeln mit knusprigem Hähnchenstück","5,50 / 6,50 / 9,90","box",""],
   ["B6","Box mi vit","Mì xào vịt giòn","Bratnudeln mit knuspriger Ente","14,50","box",""],
-  ["B7","Box Mi Ga Dui","Mì xào gà đùi quay","Bratnudeln mit geröstetem Chicken","13,50","box",""],
+  ["B7","Box Mi Dui","Mì xào gà đùi quay","Bratnudeln mit geröstetem Chicken","13,50","box",""],
   ["B8","Box Mi Cha gio","Mì xào kèm chả giò mini","Bratnudeln mit Minifrühlingsrolle","6,50","box","chay"],
   ["B9","Box Ga cuc chua ngot","Gà cục sốt chua ngọt, cơm","Chickenstreifen mit Reis, süß-sauer","6,50","box",""],
+  ["BX","Box Mi Vit (Angebot)","Mì xào vịt · giá khuyến mãi","Bratnudeln mit knuspriger Ente, Angebot","9,90","box",""],
   ["B10","Box Rau Den","Rau sốt đen (Chop Suey), cơm","Gemüse Chop Suey mit Reis","7,90","box","chay"],
   ["B11","Box Ga Den","Gà sốt đen (Chop Suey), cơm","Chop Suey mit Hühnerfleisch und Reis","7,90","box",""],
   ["B12","Box Rau Lac","Rau sốt lạc, cơm","Erdnuss-Sauce mit Gemüse und Reis","7,90","box","chay"],
@@ -259,63 +270,62 @@ const RAW = [
   ["B20","Cha Gio mini (10)","Chả giò chay mini, 10 cái","Minifrühlingsrollen, 10 Stück","4,50","box","chay"],
   ["B21","Goi cuon Mango","Gỏi cuốn xoài","Sommerrolle mit Mango","7,50","box","chay"],
   ["B22","Goi cuon tom","Gỏi cuốn tôm","Sommerrolle mit Garnelen","8,50","box",""],
-  ["BX","Box Mi Vit (Angebot)","Mì xào vịt · giá khuyến mãi","Bratnudeln mit knuspriger Ente, Angebot","9,90","box",""],
 
   ["1","Pekingsuppe","Súp Bắc Kinh: vịt, rau, trứng, chua cay","Pekingsuppe","3,90","a","cay"],
   ["2","Thai-Suppe","Súp Thái, gà","Thai-Suppe","4,90","a","cay"],
   ["3","Gyoza-Chicken","Gyoza gà, sốt teriyaki","Gyoza mit Hühnerfleisch","5,90","a",""],
   ["4","Goi cuon tom (4)","Gỏi cuốn tôm, 4 cuốn","Sommerrollen mit Garnelen, 4 Stück","8,50","a",""],
   ["5","Nem VN (2)","Nem rán, 2 cái","Nem, vietnamesische Frühlingsrollen","5,50","a",""],
-  ["6","Com Rang Ga xao","Cơm rang gà","Gebratener Reis mit Hühnerfleisch","8,90","a",""],
+  ["6","Com Rang Ga","Cơm rang gà","Gebratener Reis mit Hühnerfleisch","8,90","a",""],
   ["7","Com rang vit","Cơm rang vịt giòn","Gebratener Reis mit knuspriger Ente","14,50","a",""],
   ["8","Com Rang Tom","Cơm rang tôm lớn","Gebratener Reis mit Riesengarnelen","14,90","a",""],
-  ["9","Mi Ga Xao","Mì xào gà","Gebratene Nudeln mit Hühnerfleisch","8,90","a",""],
+  ["9","Mi Ga","Mì xào gà","Gebratene Nudeln mit Hühnerfleisch","8,90","a",""],
   ["10","Mi Paniert","Mì xào gà chiên bột","Gebratene Nudeln mit paniertem Hühnerfleisch","12,90","a",""],
-  ["11","Mi Ga Dui","Mì xào gà đùi quay","Gebratene Nudeln mit geröstetem Chicken","13,50","a",""],
+  ["11","Mi Dui","Mì xào gà đùi quay","Gebratene Nudeln mit geröstetem Chicken","13,50","a",""],
   ["12","Mi Vit","Mì xào vịt giòn","Gebratene Nudeln mit knuspriger Ente","14,50","a",""],
   ["13","Mi Tom","Mì xào tôm lớn","Gebratene Nudeln mit Riesengarnelen","14,90","a",""],
   ["15","Pho Bo","Phở bò","Pho mit Rindfleisch","13,90","a",""],
   ["16","Pho Ga","Phở gà","Pho mit Hühnerfleisch","13,50","a",""],
-  ["20","Ga Xao Den","Gà xào · sốt đen (Chop Suey)","Chop Suey mit Hühnerfleisch","12,90","a",""],
+  ["20","Ga Den","Gà xào · sốt đen (Chop Suey)","Chop Suey mit Hühnerfleisch","12,90","a",""],
   ["21","Paniert Den","Gà chiên bột · sốt đen","Chop Suey mit paniertem Hühnerfleisch","13,50","a",""],
-  ["22","Ga Dui Den","Gà đùi quay · sốt đen","Chop Suey mit geröstetem Chicken","13,90","a",""],
+  ["22","Dui Den","Gà đùi quay · sốt đen","Chop Suey mit geröstetem Chicken","13,90","a",""],
   ["23","Vit Den","Vịt giòn · sốt đen","Chop Suey mit knuspriger Ente","14,90","a",""],
   ["24","Bo Den","Bò · sốt đen","Chop Suey mit Rindfleisch","13,90","a",""],
-  ["25","Tom Sot Den","Tôm lớn · sốt đen","Chop Suey mit Riesengarnelen","14,90","a",""],
+  ["25","Tom Den","Tôm lớn · sốt đen","Chop Suey mit Riesengarnelen","14,90","a",""],
 
-  ["30","Ga xao chua ngot","Gà xào · chua ngọt","Süß-Sauer mit Hühnerfleisch","12,50","b",""],
+  ["30","Ga chua ngot","Gà xào · chua ngọt","Süß-Sauer mit Hühnerfleisch","12,50","b",""],
   ["31","Paniert chua ngot","Gà chiên bột · chua ngọt","Süß-Sauer mit paniertem Hühnerfleisch","13,30","b",""],
   ["33","Vit chua ngot","Vịt giòn · chua ngọt","Süß-Sauer mit knuspriger Ente","14,50","b",""],
   ["40","Ga Lac","Gà xào · sốt lạc","Erdnuss-Sauce mit Hühnerfleisch","12,90","b",""],
   ["41","Paniert Lac","Gà chiên bột · sốt lạc","Erdnuss-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
-  ["42","Ga dui Lac","Gà đùi quay · sốt lạc","Erdnuss-Sauce mit geröstetem Chicken","14,30","b",""],
+  ["42","Dui Lac","Gà đùi quay · sốt lạc","Erdnuss-Sauce mit geröstetem Chicken","14,30","b",""],
   ["43","Vit Lac","Vịt giòn · sốt lạc","Erdnuss-Sauce mit knuspriger Ente","14,90","b",""],
   ["50","Ga Do","Gà xào · cà ri đỏ","Red Curry mit Hühnerfleisch","12,90","b","cay"],
   ["51","Paniert Do","Gà chiên bột · cà ri đỏ","Red Curry mit paniertem Hühnerfleisch","13,90","b","cay"],
-  ["52","Ga Dui Do","Gà đùi quay · cà ri đỏ","Red Curry mit geröstetem Chicken","14,30","b","cay"],
+  ["52","Dui Do","Gà đùi quay · cà ri đỏ","Red Curry mit geröstetem Chicken","14,30","b","cay"],
   ["53","Vit Do","Vịt giòn · cà ri đỏ","Red Curry mit knuspriger Ente","14,90","b","cay"],
   ["54","Bo Do","Bò · cà ri đỏ","Red Curry mit Rindfleisch","13,90","b","cay"],
   ["55","Tom Do","Tôm lớn · cà ri đỏ","Red Curry mit Riesengarnelen","14,90","b","cay"],
-  ["60","Mango Ga xao","Gà xào · sốt xoài","Mango-Sauce mit Hühnerfleisch","12,90","b",""],
-  ["61","Mango Paniert","Gà chiên bột · sốt xoài","Mango-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
-  ["63","Mango Vit","Vịt giòn · sốt xoài","Mango-Sauce mit knuspriger Ente","14,90","b",""],
-  ["64","Mango Tom","Tôm lớn · sốt xoài","Mango-Sauce mit Riesengarnelen","14,90","b",""],
-  ["65","BBQ Ga Xao","Gà xào · sốt BBQ","BBQ-Sauce mit Hühnerfleisch","12,90","b",""],
-  ["66","BBQ Paniert","Gà chiên bột · sốt BBQ","BBQ-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
-  ["67","BBQ Ga Dui","Gà đùi quay · sốt BBQ","BBQ-Sauce mit geröstetem Chicken","13,90","b",""],
-  ["68","BBQ Vit","Vịt giòn · sốt BBQ","BBQ-Sauce mit knuspriger Ente","14,90","b",""],
-  ["69","BBQ Rindfleisch","Bò · sốt BBQ","BBQ-Sauce mit Rindfleisch","13,90","b",""],
+  ["60","Ga Mango","Gà xào · sốt xoài","Mango-Sauce mit Hühnerfleisch","12,90","b",""],
+  ["61","Paniert Mango","Gà chiên bột · sốt xoài","Mango-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
+  ["63","Vit Mango","Vịt giòn · sốt xoài","Mango-Sauce mit knuspriger Ente","14,90","b",""],
+  ["64","Tom Mango","Tôm lớn · sốt xoài","Mango-Sauce mit Riesengarnelen","14,90","b",""],
+  ["65","Ga BBQ","Gà xào · sốt BBQ","BBQ-Sauce mit Hühnerfleisch","12,90","b",""],
+  ["66","Paniert BBQ","Gà chiên bột · sốt BBQ","BBQ-Sauce mit paniertem Hühnerfleisch","13,50","b",""],
+  ["67","Dui BBQ","Gà đùi quay · sốt BBQ","BBQ-Sauce mit geröstetem Chicken","13,90","b",""],
+  ["68","Vit BBQ","Vịt giòn · sốt BBQ","BBQ-Sauce mit knuspriger Ente","14,90","b",""],
+  ["69","Bo BBQ","Bò · sốt BBQ","BBQ-Sauce mit Rindfleisch","13,90","b",""],
 
   ["71","Bun Nem","Bún nem","Bun Nem","10,00","c",""],
   ["72","Bun Bo Nam Bo","Bún bò Nam Bộ","Bun Bo Nam Bo","10,00","c",""],
   ["75","Pad Thai Tom","Pad Thai tôm","Pad Thai mit Garnelen","14,90","c","cay"],
-  ["78","Udon Paniert","Udon xào gà chiên bột, sốt teriyaki","Gebratene Udon-Nudeln mit paniertem Hühnerfleisch","13,90","c",""],
-  ["79","TomYum Tom","Súp Tom Yum, udon, tôm lớn","Tom Yum mit Riesengarnelen","14,90","c","cay"],
+  ["78","Paniert Udon","Udon xào gà chiên bột, sốt teriyaki","Gebratene Udon-Nudeln mit paniertem Hühnerfleisch","13,90","c",""],
+  ["79","TomYum Udon Tom","Súp Tom Yum, udon, tôm lớn","Tom Yum mit Riesengarnelen","14,90","c","cay"],
   ["80","Rau den","Rau · sốt đen","Chop Suey mit Gemüse","11,90","c","chay"],
   ["81","Rau lac","Rau · sốt lạc","Erdnuss-Sauce mit Gemüse","11,90","c","chay"],
   ["82","Rau Do","Rau · cà ri đỏ","Red Curry mit Gemüse","11,90","c","chay cay"],
-  ["83","Mango chay","Rau · sốt xoài","Mango-Sauce mit Gemüse","11,90","c","chay"],
-  ["84","BBQ Chay","Rau · sốt BBQ","BBQ-Sauce mit Gemüse","11,90","c","chay"],
+  ["83","Rau Mango","Rau · sốt xoài","Mango-Sauce mit Gemüse","11,90","c","chay"],
+  ["84","Rau BBQ","Rau · sốt BBQ","BBQ-Sauce mit Gemüse","11,90","c","chay"],
   ["85","Tofu Den","Đậu phụ, rau · sốt đen","Chop Suey mit Tofu","12,90","c","chay"],
   ["86","Tofu Lac","Đậu phụ, rau · sốt lạc","Erdnuss-Sauce mit Tofu","12,90","c","chay"],
   ["87","Tofu Do","Đậu phụ, rau · cà ri đỏ","Red Curry mit Tofu","12,90","c","chay cay"],
@@ -332,12 +342,47 @@ const RAW = [
   ["98","Bún-tofu","Bún đậu phụ, rau thơm, lạc","Bun mit Tofu","12,50","c",""]
 ];
 
-const GROUP_NAME = { box: "Box to go", a: "Mittag 1–25", b: "Mittag 30–69", c: "Mittag 70–98" };
-const DECKS = [["box", "Box to go"], ["a", "1–25"], ["b", "30–69"], ["c", "70–98"], ["all", "Tất cả"]];
+const GROUP_NAME = { box: "Box to go", a: "Mittag 1–25", b: "Mittag 30–69", c: "Mittag 71–98" };
+const DECKS = [["box", "Box to go"], ["a", "1–25"], ["b", "30–69"], ["c", "71–98"], ["all", "Tất cả"]];
+
+/* Nhóm món và màu sốt giống bảng bếp 05.11.2026: [tên nhóm, ghi chú, các số] */
+const SECTIONS = [
+  ["Mì / Cơm", "klein · groß · mega", "B1 B2 B3 B4 B5"],
+  ["Box đặc biệt", "", "B6 B7 B8 B9 BX"],
+  ["Box sốt", "", "B10 B11 B12 B13 B14 B15 B16 B17"],
+  ["Cuốn & chả giò", "", "B20 B21 B22"],
+  ["Vorspeisen", "khai vị", "1 2 3 4 5"],
+  ["Cơm rang · Mì xào", "", "6 7 8 9 10 11 12 13"],
+  ["Phở", "", "15 16"],
+  ["Chop Suey", "sốt đen", "20 21 22 23 24 25"],
+  ["Süß-Sauer", "chua ngọt", "30 31 33"],
+  ["Erdnuss", "sốt lạc", "40 41 42 43"],
+  ["Red Curry", "sốt đỏ", "50 51 52 53 54 55"],
+  ["Mango", "sốt xoài", "60 61 63 64"],
+  ["BBQ", "", "65 66 67 68 69"],
+  ["Spezial", "Pad Thai · Bún · Udon", "71 72 75 78 79"],
+  ["Chay · Rau & Tofu", "", "80 81 82 83 84 85 86 87 88 89"],
+  ["Chay · Khác", "", "90 91 92 93 94 95 96 97 98"]
+];
+const SAUCES = {
+  den: "B10 B11 20 21 22 23 24 25 80 85",
+  cn: "B9 30 31 33",
+  lac: "B12 B13 40 41 42 43 81 86",
+  do: "B14 B15 50 51 52 53 54 55 82 87",
+  mango: "B16 B17 60 61 63 64 83 88",
+  bbq: "65 66 67 68 69 84 89"
+};
 const MODES = [["cards", "Thẻ"], ["learn", "Học"], ["kasse", "Bấm số"], ["match", "Ghép"], ["tips", "Mẹo"], ["list", "Bảng"]];
 
 const ITEMS = RAW.map(r => ({ c: r[0], k: r[1], v: r[2], d: r[3], p: r[4], g: r[5], tags: r[6] ? r[6].split(" ") : [] }));
 const BY = Object.fromEntries(ITEMS.map(i => [i.c, i]));
+SECTIONS.forEach(([, , codes], n) => codes.split(" ").forEach(c => { if (BY[c]) BY[c].sec = n; }));
+Object.entries(SAUCES).forEach(([s, codes]) => codes.split(" ").forEach(c => { if (BY[c]) BY[c].sauce = s; }));
+/* một nhóm chỉ có một màu khi mọi món trong nhóm cùng sốt (Chop Suey, Erdnuss…) */
+const SEC_SAUCE = SECTIONS.map(([, , codes]) => {
+  const s = new Set(codes.split(" ").map(c => (BY[c] && BY[c].sauce) || ""));
+  return s.size === 1 ? [...s][0] : "";
+});
 
 /* ---------- helpers ---------- */
 const $ = (s, r) => (r || document).querySelector(s);
@@ -353,6 +398,9 @@ function shuffle(a) {
 const deText = i => (i.g === "box" ? i.d + " (Box)" : i.d);
 const groupChip = i => `<span class="grp${i.g === "box" ? " box" : ""}">${GROUP_NAME[i.g]}</span>`;
 const tagHtml = i => i.tags.map(t => `<span class="tag ${t}">${t === "chay" ? "Chay" : "Cay"}</span>`).join("");
+const sc = s => (s ? " s-" + s : "");
+const secName = n => (SECTIONS[n] ? SECTIONS[n][0] + (SECTIONS[n][1] ? " · " + SECTIONS[n][1] : "") : "");
+const secHtml = i => `<span class="sec${sc(i.sauce)}"><i class="dot"></i>${esc(secName(i.sec))}</span>`;
 const fmtS = ms => (ms / 1000).toFixed(1).replace(".", ",") + " s";
 
 const store = {
@@ -437,11 +485,12 @@ function frontHtml(i) {
   return `${k}${groupChip(i)}<div class="f-code">${esc(i.c)}</div>`;
 }
 function backHtml(i) {
-  return `<div class="b-head">${groupChip(i)}<span class="b-code">${esc(i.c)}</span></div>
+  return `<div class="b-head">${groupChip(i)}<span class="b-code${sc(i.sauce)}">${esc(i.c)}</span></div>
     <div class="b-name">${esc(i.k)}</div>
     <div class="b-vi">${esc(i.v)}</div>
     <div class="b-de">„${esc(i.d)}“</div>
-    <div class="b-foot"><span class="price">${esc(i.p)} €</span>${tagHtml(i)}</div>`;
+    <div class="b-foot"><span class="price">${esc(i.p)} €</span>${tagHtml(i)}</div>
+    ${secHtml(i)}`;
 }
 
 function drawCard() {
@@ -834,77 +883,84 @@ function mini(codes) {
   return `<div class="mini">${codes.map(c => { const i = BY[c]; return `<div><b>${esc(c)}</b><span>${esc(i.k)} · ${esc(i.p)}</span></div>`; }).join("")}</div>`;
 }
 function Tips() {
-  const MEAT = ["Gà xào<i>_0</i>", "Paniert<i>_1</i>", "Gà đùi<i>_2</i>", "Vịt<i>_3</i>", "Bò<i>_4</i>", "Tôm<i>_5</i>"];
-  const MEAT_PLAIN = ["Gà xào", "Paniert", "Gà đùi", "Vịt", "Bò", "Tôm"];
+  const MEAT = ["Ga<i>_0</i>", "Paniert<i>_1</i>", "Dui<i>_2</i>", "Vit<i>_3</i>", "Bo<i>_4</i>", "Tom<i>_5</i>"];
+  const MEAT_PLAIN = ["Ga", "Paniert", "Dui", "Vit", "Bo", "Tom"];
+  const S = (key, label) => `<span class="${sc(key).trim()}"><i class="dot"></i>${label}</span>`;
   panel.innerHTML = `<div class="tips">
   <section>
     <h2><span class="grp box">Box to go</span>B1 – BX</h2>
     <ul>
       <li><b>B1–B4:</b> số lẻ là chay, số chẵn là gà. B1–B2 là mì, B3–B4 là cơm rang. B5 là gà cục.</li>
       <li>Ba size Klein / Groß / Mega. Chay 5,00 / 6,00 / 8,90, có gà 5,50 / 6,50 / 9,90.</li>
-      <li><b>B10–B17:</b> đi theo cặp sốt, số chẵn là Rau, số lẻ là Gà. Tất cả 7,90.</li>
+      <li><b>B10–B17:</b> đi theo cặp sốt, số chẵn là Rau, số lẻ là Ga. Tất cả 7,90.</li>
     </ul>
     ${matrix(["Chay", "Gà"], [["Mì", ["B1", "B2"]], ["Cơm rang", ["B3", "B4"]]], false)}
-    ${matrix(["Rau", "Gà"], [["Đen", ["B10", "B11"]], ["Lạc", ["B12", "B13"]], ["Đỏ", ["B14", "B15"]], ["Mango", ["B16", "B17"]]], false)}
-    ${mini(["B5", "B6", "B7", "B8", "B9", "B20", "B21", "B22", "BX"])}
+    ${matrix(["Rau", "Ga"], [[S("den", "Den"), ["B10", "B11"]], [S("lac", "Lac"), ["B12", "B13"]], [S("do", "Do"), ["B14", "B15"]], [S("mango", "Mango"), ["B16", "B17"]]], false)}
+    ${mini(["B5", "B6", "B7", "B8", "B9", "BX", "B20", "B21", "B22"])}
   </section>
 
   <section>
-    <h2><span class="grp">Mittag</span>Hàng chục là sốt, hàng đơn vị là thịt</h2>
-    <p>2_ Đen · 3_ Chua ngọt · 4_ Lạc · 5_ Đỏ · 60–64 Mango · 65–69 BBQ. Số cuối: <b>0</b> gà xào, <b>1</b> paniert, <b>2</b> gà đùi, <b>3</b> vịt, <b>4</b> bò, <b>5</b> tôm.</p>
+    <h2><span class="grp">Mittag</span>Tên là thịt + sốt, số cũng vậy</h2>
+    <p>Tên trên Kasse ghép từ <b>thịt</b> và <b>sốt</b>: <i>Vit Do</i> là vịt cà ri đỏ, <i>Paniert Lac</i> là gà chiên bột sốt lạc.</p>
+    <p>Số ghép theo cùng cách: <b>hàng chục là sốt</b> (2_ Den · 3_ chua ngot · 4_ Lac · 5_ Do · 60–64 Mango · 65–69 BBQ), <b>hàng đơn vị là thịt</b> (0 Ga · 1 Paniert · 2 Dui · 3 Vit · 4 Bo · 5 Tom).</p>
     ${matrix(MEAT, [
-      ["Đen", ["20", "21", "22", "23", "24", "25"]],
-      ["Chua ngọt", ["30", "31", null, "33", null, null]],
-      ["Lạc", ["40", "41", "42", "43", null, null]],
-      ["Đỏ", ["50", "51", "52", "53", "54", "55"]],
-      ["Mango", ["60", "61", null, "63", null, "64"]],
-      ["BBQ", ["65", "66", "67", "68", "69", null]]
+      [S("den", "Den"), ["20", "21", "22", "23", "24", "25"]],
+      [S("cn", "chua ngot"), ["30", "31", null, "33", null, null]],
+      [S("lac", "Lac"), ["40", "41", "42", "43", null, null]],
+      [S("do", "Do"), ["50", "51", "52", "53", "54", "55"]],
+      [S("mango", "Mango"), ["60", "61", null, "63", null, "64"]],
+      [S("bbq", "BBQ"), ["65", "66", "67", "68", "69", null]]
     ], true)}
-    <p class="legend"><span class="sw"></span>Ô vàng là số không theo quy tắc: 64 là tôm xoài, BBQ đếm lại từ 65.</p>
+    <p class="legend"><span class="sw"></span>Ô vàng là số không theo quy tắc: 64 là Tom Mango, BBQ đếm lại từ 65 (65 Ga BBQ đến 69 Bo BBQ).</p>
     <h3>Giá món sốt</h3>
     <div class="plist">
-      <div><span>Gà xào</span><b>12,90</b></div><div><span>Paniert</span><b>13,50</b></div><div><span>Gà đùi</span><b>13,90</b></div>
-      <div><span>Bò</span><b>13,90</b></div><div><span>Vịt</span><b>14,90</b></div><div><span>Tôm</span><b>14,90</b></div>
+      <div><span>Ga</span><b>12,90</b></div><div><span>Paniert</span><b>13,50</b></div><div><span>Dui</span><b>13,90</b></div>
+      <div><span>Bo</span><b>13,90</b></div><div><span>Vit</span><b>14,90</b></div><div><span>Tom</span><b>14,90</b></div>
     </div>
-    <p class="legend">Khác giá: chua ngọt rẻ hơn (30 = 12,50 · 31 = 13,30 · 32 = 14,50). Gà đùi sốt Lạc và Đỏ (42, 52) 14,30. Paniert Đỏ (51) 13,90.</p>
+    <p class="legend">Khác giá: chua ngọt rẻ hơn (30 = 12,50 · 31 = 13,30 · 33 = 14,50). Dui Lac và Dui Do (42, 52) 14,30. Paniert Do (51) 13,90.</p>
   </section>
 
   <section>
     <h2>Mì xào và cơm rang (6–13)</h2>
-    <p>Thứ tự thịt giống bảng trên, chỉ bỏ bò.</p>
-    ${matrix(MEAT_PLAIN, [["Mì xào", ["9", "10", "11", "12", null, "13"]], ["Cơm rang", ["6", null, null, "7", null, "8"]]], false)}
+    <p>Tên là Mi hoặc Com Rang cộng thịt. Thứ tự thịt giống bảng trên, không có bò.</p>
+    ${matrix(MEAT_PLAIN, [["Mi", ["9", "10", "11", "12", null, "13"]], ["Com Rang", ["6", null, null, "7", null, "8"]]], false)}
   </section>
 
   <section>
     <h2>Chay (80–89)</h2>
-    <p>Sốt theo thứ tự Đen · Lạc · Đỏ · Mango · BBQ. 80–84 là rau (11,90), 85–89 là tofu (12,90), cộng 5 là ra số tofu.</p>
-    ${matrix(["Rau", "Tofu", "Box rau"], [["Đen", ["80", "85", "B10"]], ["Lạc", ["81", "86", "B12"]], ["Đỏ", ["82", "87", "B14"]], ["Mango", ["83", "88", "B16"]], ["BBQ", ["84", "89", null]]], false)}
+    <p>Rau + sốt là 80–84 (11,90), Tofu + sốt là 85–89 (12,90). Sốt theo thứ tự Den · Lac · Do · Mango · BBQ, cộng 5 là ra số Tofu.</p>
+    ${matrix(["Rau", "Tofu", "Box rau"], [[S("den", "Den"), ["80", "85", "B10"]], [S("lac", "Lac"), ["81", "86", "B12"]], [S("do", "Do"), ["82", "87", "B14"]], [S("mango", "Mango"), ["83", "88", "B16"]], [S("bbq", "BBQ"), ["84", "89", null]]], false)}
   </section>
 
   <section>
     <h2>Món lẻ còn lại</h2>
-    <h3>Súp và món nhỏ</h3>${mini(["1", "2", "3", "4", "5", "15", "16"])}
-    <h3>Bún, Pad Thai, Udon</h3>${mini(["71", "72", "75", "78", "79"])}
-    <h3>Chay lẻ (90–98)</h3>${mini(["90", "91", "92", "93", "94", "95", "96", "97", "98"])}
+    <h3>Vorspeisen và Phở</h3>${mini(["1", "2", "3", "4", "5", "15", "16"])}
+    <h3>Spezial: Pad Thai, Bún, Udon</h3>${mini(["71", "72", "75", "78", "79"])}
+    <h3>Chay khác (90–98)</h3>${mini(["90", "91", "92", "93", "94", "95", "96", "97", "98"])}
   </section>
 
   <section>
     <h2>Từ trên Kasse, khách nói thế nào</h2>
+    <h3>Thịt</h3>
     <div class="vocab">
-      <div><b>Den</b>sốt đen · Chop Suey</div>
-      <div><b>Lac</b>sốt lạc · Erdnuss</div>
-      <div><b>Do</b>cà ri đỏ · Red Curry</div>
-      <div><b>Mango</b>sốt xoài · Mango</div>
-      <div><b>chua ngot</b>Süß-Sauer</div>
-      <div><b>BBQ</b>BBQ-Sauce</div>
-      <div><b>Ga xao</b>gà · Hühnerfleisch</div>
+      <div><b>Ga</b>gà xào · Hühnerfleisch</div>
       <div><b>Paniert</b>gà chiên bột · paniertes Huhn</div>
-      <div><b>Ga Dui</b>gà đùi · geröstetes Chicken</div>
-      <div><b>Ga cuc</b>gà cục · knuspriges Hähnchen</div>
+      <div><b>Dui</b>gà đùi quay · geröstetes Chicken</div>
       <div><b>Vit</b>vịt giòn · knusprige Ente</div>
       <div><b>Bo</b>bò · Rindfleisch</div>
       <div><b>Tom</b>tôm lớn · Riesengarnelen</div>
-      <div><b>Rau / chay</b>Gemüse · vegetarisch</div>
+      <div><b>Tofu</b>đậu phụ · Tofu</div>
+      <div><b>Rau / chay</b>rau · Gemüse, vegetarisch</div>
+      <div><b>Ga cuc</b>gà cục giòn (Box) · knuspriges Hähnchen</div>
+    </div>
+    <h3>Sốt</h3>
+    <div class="vocab">
+      <div><b>${S("den", "Den")}</b>sốt đen · Chop Suey</div>
+      <div><b>${S("cn", "chua ngot")}</b>chua ngọt · Süß-Sauer</div>
+      <div><b>${S("lac", "Lac")}</b>sốt lạc · Erdnuss</div>
+      <div><b>${S("do", "Do")}</b>cà ri đỏ · Red Curry</div>
+      <div><b>${S("mango", "Mango")}</b>sốt xoài · Mango</div>
+      <div><b>${S("bbq", "BBQ")}</b>BBQ-Sauce</div>
     </div>
   </section>
   </div>`;
@@ -919,10 +975,15 @@ function List() {
   const draw = () => {
     const raw = $("#q").value, words = norm(raw).split(" ").filter(Boolean);
     const items = deckItems().filter(i => { const hay = norm(i.c + " " + i.k + " " + i.v + " " + i.d); return words.every(w => hay.includes(w)); });
-    let html = "", g = null;
+    let html = "", g = null, sec = null;
     items.forEach(i => {
       if (deck === "all" && i.g !== g) { g = i.g; html += `<div class="l-group">${groupChip(i)}</div>`; }
-      html += `<div class="lrow${known.has(i.c) ? " known" : ""}"><span class="l-code">${esc(i.c)}</span>
+      if (i.sec !== sec) {
+        sec = i.sec;
+        const [name, sub] = SECTIONS[sec] || ["", ""];
+        html += `<div class="l-sec${sc(SEC_SAUCE[sec])}"><i class="dot"></i><b>${esc(name)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div>`;
+      }
+      html += `<div class="lrow${sc(i.sauce)}${known.has(i.c) ? " known" : ""}"><span class="l-code">${esc(i.c)}</span>
         <span class="l-main"><b>${esc(i.k)}</b><span>${esc(i.v)}</span><span>${esc(i.d)}</span></span>
         <span class="l-price">${esc(i.p)}</span></div>`;
     });
