@@ -279,3 +279,10 @@ if (SUSHI_PAUSED) {
     if (isSushiItem(dinnerMenu[i])) dinnerMenu.splice(i, 1);
   }
 }
+
+// Einzelne Gerichte ausblenden (Speisekarte, Schnellsuche, Warenkorb), unabhängig von der Sushi-Pause.
+// Zum Wiederaufnehmen die Nummer aus der Liste entfernen.
+const HIDDEN_DISH_IDS = ["20"]; // 20: Bowl Lachs - roher Lachs
+for (let i = dinnerMenu.length - 1; i >= 0; i -= 1) {
+  if (HIDDEN_DISH_IDS.includes(dinnerMenu[i].id)) dinnerMenu.splice(i, 1);
+}
